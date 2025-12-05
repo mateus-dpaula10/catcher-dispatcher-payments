@@ -39,6 +39,8 @@ class CheckoutController extends Controller
                 $eventTime = time(); // fallback
             }
 
+            $ip = getRealIp();
+
             // Monta payload básico com os valores do JSON
             $payload = [
                 'status'            => $data['status'] ?? $data['event'] ?? null,
@@ -50,7 +52,7 @@ class CheckoutController extends Controller
                 'email'             => $data['email'] ?? null,
                 'phone'             => $data['phone'] ?? null,
                 'cpf'               => $data['cpf'] ?? null,
-                'ip'                => $request->ip(),
+                'ip'                => $ip,
                 'method'            => $data['method'] ?? null,
                 'event_time'        => $eventTime,
                 'page_url'          => $data['page_url'] ?? $request->fullUrl(),

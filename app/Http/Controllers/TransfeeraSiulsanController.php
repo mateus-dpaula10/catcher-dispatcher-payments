@@ -34,15 +34,24 @@ class TransfeeraSiulsanController extends Controller
         $lastName = implode(' ', $nameParts); 
 
         $dados = Dados::orderBy('created_at', 'desc')
-                     ->take(2)
+                     ->take(200)
                      ->get();
 
-        $dado = $dados->firstWhere('first_name', $firstName);
+        $firstNameNormalized = strtolower($firstName);
+
+        $dado = $dados->first(function ($item) use ($firstNameNormalized) {
+            return strtolower($item->first_name) === $firstNameNormalized;
+        });
 
         if ($dado) {
+            $firstNameFormatted = ucwords(strtolower($firstName));
+            $lastNameFormatted  = ucwords(strtolower($lastName));
+
+            $dado->first_name = $firstNameFormatted;
+            $dado->last_name  = $lastNameFormatted;  
+
             $dado->status = 'paid';
             $dado->cpf = $cpf;
-            $dado->last_name = $lastName;          
             $dado->amount = $amount;               
             $dado->amount_cents = $amountCents; 
             $dado->save();
@@ -53,9 +62,12 @@ class TransfeeraSiulsanController extends Controller
                 'cpf' => $cpf
             ]);
         } else {
+            $firstNameFormatted = ucwords(strtolower($firstName));
+            $lastNameFormatted  = ucwords(strtolower($lastName));
+
             $dado = Dados::create([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
+                'first_name' => $firstNameFormatted,
+                'last_name' => $lastNameFormatted,
                 'cpf' => $cpf,
                 'status' => 'paid',
                 'pix_key' => $data['data']['pix_key'] ?? null,
@@ -116,38 +128,31 @@ class TransfeeraSiulsanController extends Controller
 
         if ($dado->status === 'paid' && $dado->amount >= 1) {
             // -----------------------------
-            // Gerar event_id
-            // -----------------------------
-            $baseId = ($dado->amount ?? 0) . '_' . ($dado->cpf ?? 'no_doc') . '_' . ($dado->event_time ?? now()->timestamp);
-            $eventId = preg_replace("/[^a-zA-Z0-9_-]/", "", $baseId) . "_" . substr(bin2hex(random_bytes(3)), 0, 6);
-
-            // -----------------------------
-            // Campos hashados para user_data
+            // Normalização e hash dos dados do usuário
             // -----------------------------
             $normalize = fn($str) => strtolower(trim($str));
             
-            $hashedEmail = $dado->email ? hash('sha256', $normalize($dado->email)) : null;
-            $cleanPhone = $dado->phone ? preg_replace('/\D/', '', $dado->phone) : null;
-            $hashedPhone = $cleanPhone ? hash('sha256', $cleanPhone) : null;
+            $hashedEmail   = $dado->email ? hash('sha256', $normalize($dado->email)) : null;
+            $cleanPhone    = $dado->phone ? preg_replace('/\D+/', '', $dado->phone) : null;
+            $hashedPhone   = $cleanPhone ? hash('sha256', $cleanPhone) : null;
 
-            $externalBase = ($dado->email ? $normalize($dado->email) : '') . ($cleanPhone ?? '');
+            $externalBase  = ($dado->email ? $normalize($dado->email) : '') . ($cleanPhone ?: '');
             $hashedExternalId = $externalBase ? hash('sha256', $externalBase) : null;
 
-            $userData = [
-                'em' => $hashedEmail ? [$hashedEmail] : null,
-                'ph' => $hashedPhone ? [$hashedPhone] : null,
-                'fn' => $dado->first_name ? [hash('sha256', $normalize($dado->first_name))] : null,
-                'ln' => $dado->last_name ? [hash('sha256', $normalize($dado->last_name))] : null,
-                'external_id' => $hashedExternalId ? [$hashedExternalId] : null,
-                'client_ip_address' => $dado->ip ?? null,
-                'client_user_agent' => $dado->client_user_agent ?? null,
-                'fbc' => $dado->fbc ?? null,
-                'fbp' => $dado->fbp ?? null
-            ];
-            $userData = array_filter($userData, fn($v) => $v !== null);
+            $userData = array_filter([
+                'em'                  => $hashedEmail ? [$hashedEmail] : null,
+                'ph'                  => $hashedPhone ? [$hashedPhone] : null,
+                'fn'                  => $dado->first_name ? hash('sha256', $normalize($dado->first_name)) : null,
+                'ln'                  => $dado->last_name  ? hash('sha256', $normalize($dado->last_name))  : null,
+                'external_id'         => $hashedExternalId ?: null,
+                'client_ip_address'   => $dado->ip ?? null,
+                'client_user_agent'   => $dado->client_user_agent ?? null,
+                'fbc'                 => $dado->fbc ?? null,
+                'fbp'                 => $dado->fbp ?? null,
+            ]);
 
             // -----------------------------
-            // custom_data
+            // Dados customizados
             // -----------------------------
             $customData = [
                 'value' => $dado->amount,
@@ -163,37 +168,40 @@ class TransfeeraSiulsanController extends Controller
             ];
 
             // -----------------------------
-            // payload final
+            // Função para gerar event_id único
             // -----------------------------
+            $generateEventId = fn() => bin2hex(random_bytes(16)); 
+
+            // -----------------------------
+            // Construção do payload para os 3 eventos
+            // -----------------------------
+            $eventsToSend = ['Purchase', 'Donate'];
+
+            $dataEvents = [];
+            foreach ($eventsToSend as $eventName) {
+                $dataEvents[] = [
+                    'event_name' => $eventName,
+                    'event_time' => $dado->event_time ?? time(),
+                    'action_source' => 'website',
+                    'event_id' => $generateEventId(),
+                    'event_source_url' => $dado->page_url,
+                    'user_data' => $userData,
+                    'custom_data' => $customData
+                ];
+            }
+
             $capiPayload = [
-                'data' => [
-                    [
-                        'event_name' => 'AddToCart',
-                        'event_time' => $dado->event_time ?? time(),
-                        'action_source' => 'website',
-                        'event_id' => $eventId,
-                        'event_source_url' => $dado->page_url,
-                        'user_data' => $userData,
-                        'custom_data' => $customData
-                    ],
-                    [
-                        'event_name' => 'Purchase',
-                        'event_time' => $dado->event_time ?? time(),
-                        'action_source' => 'website',
-                        'event_id' => $eventId,
-                        'event_source_url' => $dado->page_url,
-                        'user_data' => $userData,
-                        'custom_data' => $customData
-                    ]
-                ],
+                'data' => $dataEvents,
                 'access_token' => env('FACEBOOK_ACCESS_TOKEN')
             ];
 
+            \Log::info('CAPI Payload recebido:', $capiPayload);
+
             // -----------------------------
-            // envio para Facebook CAPI
+            // Envio para Facebook CAPI
             // -----------------------------
             $res = Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->post("https://graph.facebook.com/v17.0/" . env('PIXEL_ID') . "/events", $capiPayload);
+                        ->post("https://graph.facebook.com/v17.0/" . env('PIXEL_ID') . "/events", $capiPayload);            
 
             \Log::info("Facebook CAPI response", [
                 'status' => $res->status(),
@@ -250,13 +258,18 @@ class TransfeeraSiulsanController extends Controller
                 'x-api-token' => env('UTMFY_API_KEY')
             ])->post(env('UTMFY_URL'), $utmPayload);
 
+            \Log::info('Utmify Payload recebido:', $utmPayload);
+
             \Log::info("Utmify response", ['status' => $res->status(), 'body' => $res->body()]);
         }
 
         return response()->json([
             'ok' => true,
             'message' => 'Webhook recebido com sucesso',
-            'received' => $capiPayload, $utmPayload
+            'received' => [
+                'capi' => $capiPayload,
+                'utm'  => $utmPayload,
+            ]
         ], 200);
     }
 }

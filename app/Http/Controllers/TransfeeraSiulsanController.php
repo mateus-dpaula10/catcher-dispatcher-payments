@@ -200,13 +200,13 @@ class TransfeeraSiulsanController extends Controller
             // -----------------------------
             // Envio para Facebook CAPI
             // -----------------------------
-            $res = Http::withHeaders(['Content-Type' => 'application/json'])
-                        ->post("https://graph.facebook.com/v17.0/" . env('PIXEL_ID') . "/events", $capiPayload);            
+            // $res = Http::withHeaders(['Content-Type' => 'application/json'])
+            //             ->post("https://graph.facebook.com/v17.0/" . env('PIXEL_ID') . "/events", $capiPayload);            
 
-            \Log::info("Facebook CAPI response", [
-                'status' => $res->status(),
-                'body' => $res->body()
-            ]);
+            // \Log::info("Facebook CAPI response", [
+            //     'status' => $res->status(),
+            //     'body' => $res->body()
+            // ]);
         }
 
         if ($payload['status'] === 'paid') {
@@ -253,14 +253,14 @@ class TransfeeraSiulsanController extends Controller
                 'isTest' => false
             ];
 
-            $res = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'x-api-token' => env('UTMFY_API_KEY')
-            ])->post(env('UTMFY_URL'), $utmPayload);
+            // $res = Http::withHeaders([
+            //     'Content-Type' => 'application/json',
+            //     'x-api-token' => env('UTMFY_API_KEY')
+            // ])->post(env('UTMFY_URL'), $utmPayload);
 
             \Log::info('Utmify Payload recebido:', $utmPayload);
 
-            \Log::info("Utmify response", ['status' => $res->status(), 'body' => $res->body()]);
+            // \Log::info("Utmify response", ['status' => $res->status(), 'body' => $res->body()]);
         }
 
         return response()->json([

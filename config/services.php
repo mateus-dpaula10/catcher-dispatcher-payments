@@ -35,4 +35,37 @@ return [
         ],
     ],
 
+    'facebook_capi' => [
+        'pixel_id'      => env('PIXEL_ID'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN'),
+    ],
+
+    'facebook_capi_susan_pet_rescue' => [
+        'pixel_id'      => env('PIXEL_ID_SUSAN_PET_RESCUE'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SUSAN_PET_RESCUE'),
+    ],
+
+    'utmify' => [
+        'url'    => env('UTMFY_URL'),
+        'api_key'=> env('UTMFY_API_KEY'),
+    ],
+
+    'utmify_susan_pet_rescue' => [
+        'url'    => env('UTMFY_URL_SUSAN_PET_RESCUE'),
+        'api_key'=> env('UTMFY_API_KEY_SUSAN_PET_RESCUE'),
+    ],
+
+    'lytex' => [
+        'api_key' => env('LYTEX_API_TOKEN')
+    ],
+
+    'transfeera' => [
+        'api_key' => env('TRANSFEERA_API_KEY'),
+        'client_id' => env('TRANSFEERA_CLIENT_ID'),
+        'client_secret' => env('TRANSFEERA_CLIENT_SECRET') 
+    ],
+
+    'givewp' => [
+        'secret' => env('GIVEWP_SECRET'),
+    ],
 ];

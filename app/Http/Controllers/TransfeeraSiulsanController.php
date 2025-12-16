@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Dados;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TransfeeraSiulsanController extends Controller
 {
@@ -12,7 +13,7 @@ class TransfeeraSiulsanController extends Controller
     {
         $data = $request->all();
 
-        \Log::info("Transfeera Siulsan Webhook Recebido", $data);
+        Log::info("Transfeera Siulsan Webhook Recebido", $data);
 
         $payer = $data['data']['payer'] ?? [];
         $fullName = $payer['name'] ?? null;
@@ -22,7 +23,7 @@ class TransfeeraSiulsanController extends Controller
         $eventTime = isset($data['date']) ? strtotime($data['date']) : time();
 
         if (!$fullName) {
-            \Log::warning('Payload sem nome do pagador', $data);
+            Log::warning('Payload sem nome do pagador', $data);
             return response()->json([
                 'ok' => false,
                 'message' => 'Nome do pagador não informado'
@@ -56,7 +57,7 @@ class TransfeeraSiulsanController extends Controller
             $dado->amount_cents = $amountCents; 
             $dado->save();
 
-            \Log::info("Registro existente atualizado para paid", [
+            Log::info("Registro existente atualizado para paid", [
                 'id' => $dado->id,
                 'first_name' => $dado->first_name,
                 'cpf' => $cpf
@@ -83,7 +84,7 @@ class TransfeeraSiulsanController extends Controller
                 'page_url'       => 'https://chavepix.com.br'
             ]);
 
-            \Log::info("Registro criado a partir do payload", [
+            Log::info("Registro criado a partir do payload", [
                 'id' => $dado->id,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -125,6 +126,9 @@ class TransfeeraSiulsanController extends Controller
             'pix_key'           => $dado->pix_key,
             'pix_description'   => $dado->pix_description,
         ];
+
+        $capiPayload = null;
+        $utmPayload  = null;
 
         if ($dado->status === 'paid' && $dado->amount >= 1) {
             // -----------------------------
@@ -192,21 +196,27 @@ class TransfeeraSiulsanController extends Controller
 
             $capiPayload = [
                 'data' => $dataEvents,
-                'access_token' => env('FACEBOOK_ACCESS_TOKEN')
+                'access_token' => config('services.facebook_capi.access_token'),
             ];
 
-            \Log::info('CAPI Payload recebido:', $capiPayload);
+            $pixelId = config('services.facebook_capi.pixel_id');
 
-            // -----------------------------
-            // Envio para Facebook CAPI
-            // -----------------------------
-            // $res = Http::withHeaders(['Content-Type' => 'application/json'])
-            //             ->post("https://graph.facebook.com/v17.0/" . env('PIXEL_ID') . "/events", $capiPayload);            
+            if ($pixelId && $capiPayload['access_token']) {
+                Log::info('CAPI Payload recebido:', $capiPayload);
 
-            // \Log::info("Facebook CAPI response", [
-            //     'status' => $res->status(),
-            //     'body' => $res->body()
-            // ]);
+                $res = Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+
+                Log::info("Facebook CAPI response", [
+                    'status' => $res->status(),
+                    'body'   => $res->body(),
+                ]);
+            } else {
+                Log::warning('PIXEL_ID ou FACEBOOK_ACCESS_TOKEN não configurados', [
+                    'pixelId' => $pixelId,
+                    'hasToken' => !empty($capiPayload['access_token']),
+                ]);
+            }
         }
 
         if ($payload['status'] === 'paid') {
@@ -253,14 +263,26 @@ class TransfeeraSiulsanController extends Controller
                 'isTest' => false
             ];
 
-            // $res = Http::withHeaders([
-            //     'Content-Type' => 'application/json',
-            //     'x-api-token' => env('UTMFY_API_KEY')
-            // ])->post(env('UTMFY_URL'), $utmPayload);
+            $utmUrl = config('services.utmify.url');
+            $utmKey = config('services.utmify.api_key');
 
-            \Log::info('Utmify Payload recebido:', $utmPayload);
+            if ($utmUrl && $utmKey) {
+                $res = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                    'x-api-token'  => $utmKey,
+                ])->post($utmUrl, $utmPayload);
 
-            // \Log::info("Utmify response", ['status' => $res->status(), 'body' => $res->body()]);
+                Log::info('Utmify Payload recebido:', $utmPayload);
+                Log::info("Utmify response", [
+                    'status' => $res->status(),
+                    'body'   => $res->body(),
+                ]);
+            } else {
+                Log::warning('UTMFY_URL ou UTMFY_API_KEY não configurados', [
+                    'utmUrl' => $utmUrl,
+                    'utmKey' => !empty($utmKey),
+                ]);
+            }
         }
 
         return response()->json([

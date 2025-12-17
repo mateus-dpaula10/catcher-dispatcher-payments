@@ -1,0 +1,165 @@
+:root {    
+    --bg: #0E1A2B;
+    --brand: #8D0000;
+    --card: rgba(255, 255, 255, .06);
+    --cardBorder: rgba(255, 255, 255, .12);
+    --text: rgba(255, 255, 255, .92);
+    --muted: rgba(255, 255, 255, .68);
+    --field: rgba(255, 255, 255, .08);
+    --fieldBorder: rgba(255, 255, 255, .14);
+    --fieldFocus: rgba(141, 0, 0, .55);
+}
+
+body#login {
+    background-color: var(--bg);
+}
+
+/* layout */
+.login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* glow discreto (ux premium) */
+.login-wrap::before {
+    content: "";
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    left: -120px;
+    top: -140px;
+    background: radial-gradient(circle, rgba(141, 0, 0, .22), transparent 60%);
+    filter: blur(2px);
+    pointer-events: none;
+}
+
+.login-wrap::after {
+    content: "";
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    right: -160px;
+    bottom: -180px;
+    background: radial-gradient(circle, rgba(255, 255, 255, .10), transparent 60%);
+    filter: blur(2px);
+    pointer-events: none;
+}
+
+.login-card {
+    border: 1px solid var(--cardBorder) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .05)) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .45) !important;
+    border-radius: 18px;
+}
+
+.login-head {
+    background: rgba(255, 255, 255, .04) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, .10) !important;
+}
+
+#logo-login {
+    height: 54px;
+    width: auto;
+    filter: drop-shadow(0 8px 16px rgba(141, 0, 0, .25));
+}
+
+.login-title {
+    color: var(--text);
+    letter-spacing: .2px;
+}
+
+.login-subtitle {
+    color: var(--muted);
+}
+
+/* inputs */
+.form-label {
+    color: rgba(255, 255, 255, .78);
+}
+
+.input-group-text {
+    background: rgba(255, 255, 255, .06) !important;
+    border: 1px solid var(--fieldBorder) !important;
+    color: rgba(255, 255, 255, .75) !important;
+}
+
+.form-control {
+    background: var(--field) !important;
+    border: 1px solid var(--fieldBorder) !important;
+    color: var(--text) !important;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, .45) !important;
+}
+
+.form-control:focus {
+    border-color: var(--fieldFocus) !important;
+    box-shadow: 0 0 0 .25rem rgba(141, 0, 0, .20) !important;
+}
+
+.btn-outline-secondary {
+    border: 1px solid var(--fieldBorder) !important;
+    background: rgba(255, 255, 255, .06) !important;
+    color: rgba(255, 255, 255, .80) !important;
+}
+
+.btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, .10) !important;
+    border-color: rgba(255, 255, 255, .20) !important;
+}
+
+/* primary button (brand) */
+.btn-brand {
+    background: linear-gradient(180deg, #A50000, var(--brand)) !important;
+    border: 1px solid rgba(255, 255, 255, .12) !important;
+    box-shadow: 0 10px 22px rgba(141, 0, 0, .25);
+}
+
+.btn-brand:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.btn-brand:active {
+    transform: translateY(0);
+}
+
+/* alert */
+.alert-danger {
+    background: rgba(141, 0, 0, .14) !important;
+    border: 1px solid rgba(141, 0, 0, .32) !important;
+    color: rgba(255, 255, 255, .90) !important;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(1);
+    opacity: .8;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* small footer */
+.login-footer {
+    color: rgba(255, 255, 255, .55);
+}
+
+/* mobile spacing */
+@media (max-width: 576px) {
+    .login-wrap {
+        padding: 28px 12px;
+    }
+
+    #logo-login {
+        height: 48px;
+    }
+}

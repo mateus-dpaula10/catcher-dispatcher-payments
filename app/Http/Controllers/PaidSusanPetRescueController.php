@@ -61,8 +61,13 @@ class PaidSusanPetRescueController extends Controller
             ? (int) $dado->amount_cents
             : (int) round($amount * 100);
 
-        // label do produto como no print (sem espaço após $). Se quiser com espaço: "SPR {$moneySymbol} {$amountFormatted}"
-        $productLabel = "SPR {$moneySymbol} {$amountFormatted}"; // ex: "SPR $30.00"
+        // label do produto como no print: "SPR $30.00" e, se recorrente: "SPR $30.00 R"
+        $methodLower = strtolower((string)($dado->method ?? ''));
+        $modeLower   = strtolower((string)($dado->donation_mode ?? '')); // se existir no model
+
+        $isRecurring = ($methodLower === 'paypal recurring') || ($modeLower === 'month') || ($modeLower === 'monthly');
+
+        $productLabel = "SPR {$moneySymbol}{$amountFormatted}" . ($isRecurring ? " R" : ""); // ex: "SPR $10.00 R"
 
         // =========================
         // 3) PAYLOAD BASE (IGUAL BR)
@@ -172,28 +177,43 @@ class PaidSusanPetRescueController extends Controller
                 ];
             }
 
-            $pixelId  = config('services.facebook_capi_susan_pet_rescue.pixel_id');
-            $apiToken = config('services.facebook_capi_susan_pet_rescue.access_token');
-
-            $capiPayload = [
-                'data' => $dataEvents,
-                'access_token' => $apiToken,
+            $targets = [
+                'b1s' => 'facebook_capi_susan_pet_rescue_b1s',
+                'b2s' => 'facebook_capi_susan_pet_rescue_b2s',
             ];
 
-            if ($pixelId && $apiToken) {
-                Log::info('CAPI Payload (GiveWP paid) recebido:', $capiPayload);
+            foreach ($targets as $label => $serviceKey) {
+                $pixelId  = config("services.{$serviceKey}.pixel_id");
+                $apiToken = config("services.{$serviceKey}.access_token");
+
+                if (!$pixelId || !$apiToken) {
+                    Log::warning("CAPI creds missing ({$label})", [
+                        'service' => $serviceKey,
+                        'pixelId' => $pixelId,
+                        'hasToken' => !empty($apiToken),
+                    ]);
+                    continue;
+                }
+
+                $capiPayload = [
+                    'data' => $dataEvents,
+                    'access_token' => $apiToken,
+                ];
+
+                Log::info("CAPI Payload (GiveWP paid) - {$label}", [
+                    'service'  => $serviceKey,
+                    'pixel_id' => $pixelId,
+                    'payload'  => $capiPayload,
+                ]);
 
                 $res = Http::withHeaders(['Content-Type' => 'application/json'])
                     ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
 
-                Log::info("Facebook CAPI response (GiveWP paid)", [
+                Log::info("Facebook CAPI response (GiveWP paid) - {$label}", [
+                    'service' => $serviceKey,
+                    'pixel_id' => $pixelId,
                     'status' => $res->status(),
                     'body'   => $res->body(),
-                ]);
-            } else {
-                Log::warning('PIXEL_ID ou FACEBOOK_ACCESS_TOKEN não configurados', [
-                    'pixelId'  => $pixelId,
-                    'hasToken' => !empty($apiToken),
                 ]);
             }
         }

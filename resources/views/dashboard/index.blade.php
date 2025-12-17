@@ -5,11 +5,13 @@
 @section('section')
     <div class="container-fluid" id="dashboard_index">
         <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">   
+            <div class="col-12 px-0">
+                <div class="card" style="min-height: 100vh">
+                    <div class="card-body px-0">   
                         @php
                             $baseQuery = request()->except('page');
+                            $currentTab = ($tab ?? request('tab','geral'));
+                            $currency = $currentTab === 'susan' ? '$' : 'R$';
                         @endphp
 
                         <ul class="nav nav-tabs mb-3">
@@ -44,7 +46,7 @@
 
                                 {{-- Checkbox período --}}
                                 <div class="col-md-2">
-                                    <div class="form-check mt-4">
+                                    <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="periodo" value="1"
                                             id="chkPeriodo" {{ $useRange ? 'checked' : '' }}>
                                         <label class="form-check-label" for="chkPeriodo">
@@ -81,7 +83,7 @@
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Initiate Checkout (GERAL)</div>
                                             <div class="fw-bold">
-                                                R$ {{ number_format(($totaisGerais->initiate_cents ?? 0) / 100, 2, ',', '.') }}
+                                                {{ $currency }} {{ number_format(($totaisGerais->initiate_cents ?? 0) / 100, 2, ',', '.') }}
                                             </div>
                                         </div>
                                     </div>
@@ -92,7 +94,7 @@
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Paid (GERAL)</div>
                                             <div class="fw-bold text-success">
-                                                R$ {{ number_format(($totaisGerais->paid_cents ?? 0) / 100, 2, ',', '.') }}
+                                                {{ $currency }} {{ number_format(($totaisGerais->paid_cents ?? 0) / 100, 2, ',', '.') }}
                                             </div>
                                         </div>
                                     </div>
@@ -104,7 +106,7 @@
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Initiate Checkout (FILTRO)</div>
                                             <div class="fw-bold">
-                                                R$ {{ number_format(($totaisFiltrados->initiate_cents ?? 0) / 100, 2, ',', '.') }}
+                                                {{ $currency }} {{ number_format(($totaisFiltrados->initiate_cents ?? 0) / 100, 2, ',', '.') }}
                                             </div>
                                             <div class="small text-muted">
                                                 baseado nos resultados atuais
@@ -118,7 +120,7 @@
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Paid (FILTRO)</div>
                                             <div class="fw-bold text-success">
-                                                R$ {{ number_format(($totaisFiltrados->paid_cents ?? 0) / 100, 2, ',', '.') }}
+                                                {{ $currency }} {{ number_format(($totaisFiltrados->paid_cents ?? 0) / 100, 2, ',', '.') }}
                                             </div>
                                             <div class="small text-muted">
                                                 baseado nos resultados atuais
@@ -134,7 +136,13 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>date</th>
+                                        <th>created_at</th>
+                                        <th>updated_at</th>
+                                        @if($currentTab === 'susan')
+                                            <th>external_id</th>
+                                            <th>give_payment_id</th>
+                                            <th>currency</th>
+                                        @endif
                                         <th>status</th>
                                         <th>amount</th>
                                         <th>amount_cents</th>
@@ -165,6 +173,12 @@
                                         <tr>
                                             <td>{{ $dados->firstItem() + $index }}</td>
                                             <td>{{ $dado->created_at ?? 'N/A' }}</td>
+                                            <td>{{ $dado->updated_at ?? 'N/A' }}</td>
+                                            @if($currentTab === 'susan')
+                                                <td>{{ $dado->external_id ?? 'N/A' }}</td>
+                                                <td>{{ $dado->give_payment_id ?? 'N/A' }}</td>
+                                                <td>{{ $dado->currency ?? 'N/A' }}</td>
+                                            @endif
                                             <td>{{ $dado->status ?? 'N/A' }}</td>
                                             <td>{{ $dado->amount ?? 'N/A' }}</td>
                                             <td>{{ $dado->amount_cents ?? 'N/A' }}</td>
@@ -213,6 +227,10 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+@endpush
 
 @push('scripts')
     <script>        

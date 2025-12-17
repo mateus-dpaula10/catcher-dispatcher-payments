@@ -40,9 +40,18 @@ return [
         'access_token'  => env('FACEBOOK_ACCESS_TOKEN'),
     ],
 
-    'facebook_capi_susan_pet_rescue' => [
-        'pixel_id'      => env('PIXEL_ID_SUSAN_PET_RESCUE'),
-        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SUSAN_PET_RESCUE'),
+    'facebook_capi_susan_pet_rescue_b1s' => [
+        'pixel_id'      => env('PIXEL_ID_SUSAN_PET_RESCUE_B1S'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SUSAN_PET_RESCUE_B1S'),
+    ],
+
+    'facebook_capi_susan_pet_rescue_b2s' => [
+        'pixel_id'      => env('PIXEL_ID_SUSAN_PET_RESCUE_B2S'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SUSAN_PET_RESCUE_B2S'),
+    ],
+
+    'backfill' => [
+        'secret' => env('BACKFILL_SECRET'),
     ],
 
     'utmify' => [

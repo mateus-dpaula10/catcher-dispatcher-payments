@@ -37,16 +37,22 @@ class DashboardController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search, $tab) {
                 $q->where('first_name', 'like', "%{$search}%")
                 ->orWhere('last_name', 'like', "%{$search}%")
                 ->orWhere('status', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('phone', 'like', "%{$search}%")
                 ->orWhere('cpf', 'like', "%{$search}%")
+                ->orWhere('method', 'like', "%{$search}%")
                 ->orWhere('amount', 'like', "%{$search}%");
+
+                if ($tab === 'susan') {
+                    $q->orWhere('external_id', 'like', "%{$search}%")
+                    ->orWhere('give_payment_id', 'like', "%{$search}%");
+                }
             });
         }
         

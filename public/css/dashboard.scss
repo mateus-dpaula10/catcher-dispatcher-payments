@@ -1,0 +1,153 @@
+#dashboard_index {
+    // Card “container” principal com glass
+    .card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(180deg,
+                rgba(255, 255, 255, 0.08),
+                rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        border-radius: 0;
+        overflow: hidden;
+
+        >.card-body {
+            padding-left: 18px !important;
+            padding-right: 18px !important;
+
+            // texto mais legível no fundo dark
+            color: rgba(255, 255, 255, 0.92);
+
+            // labels/auxiliares
+            .text-muted,
+            .small.text-muted {
+                color: rgba(255, 255, 255, 0.65) !important;
+            }
+
+            // inputs no mesmo estilo do login
+            .form-label,
+            .form-check-label {
+                color: rgba(255, 255, 255, 0.78) !important;
+            }
+
+            .form-control {
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                color: rgba(255, 255, 255, 0.92);
+
+                &::placeholder {
+                    color: rgba(255, 255, 255, 0.45);
+                }
+
+                &:focus {
+                    border-color: rgba(141, 0, 0, 0.55);
+                    box-shadow: 0 0 0 0.25rem rgba(141, 0, 0, 0.20);
+                }
+            }
+
+            // botão buscar no vermelho do login (se quiser manter azul, é só remover)
+            .btn.btn-primary {
+                background: linear-gradient(180deg, #A50000, #8D0000);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 10px 22px rgba(141, 0, 0, 0.25);
+                font-weight: 600;
+
+                &:hover {
+                    filter: brightness(1.06);
+                    transform: translateY(-1px);
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
+            }
+
+            // Tabela: mantém espaçamento, mas com “dark glass”
+            .table-responsive {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 14px;
+                padding: 8px;
+            }
+
+            #tabelaDados td,
+            #tabelaDados th {
+                white-space: nowrap;
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
+            }
+
+            #tabelaDados tr {
+                line-height: 1.1;
+            }
+
+            #tabelaDados {
+                color: rgba(255, 255, 255, 0.90);
+
+                thead th {
+                    font-weight: 600;
+                }
+            }
+
+            // Paginação (mantém sua lógica, só ajusta contraste)
+            .pagination-wrapper {
+                padding: 10px 0;
+            }
+
+            .pagination .page-item.active .page-link {
+                background-color: #8D0000;
+                border-color: #8D0000;
+                color: #FFF;
+            }
+
+            .pagination .page-link {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: rgba(255, 255, 255, 0.12);
+                color: rgba(255, 255, 255, 0.82);
+            }
+
+            .pagination .page-link:hover {
+                background-color: rgba(255, 255, 255, 0.10);
+            }
+
+            .pagination .page-item.disabled .page-link {
+                color: rgba(255, 255, 255, 0.45);
+            }
+
+            // Tabs em tema escuro, mantendo comportamento
+            .nav-tabs {
+                border-bottom-color: rgba(255, 255, 255, 0.14);
+
+                .nav-item {
+                    .nav-link {
+                        color: rgba(255, 255, 255, 0.75);
+                        border: 1px solid transparent;
+
+                        &:hover {
+                            color: rgba(255, 255, 255, 0.92);
+                            border-color: rgba(255, 255, 255, 0.14) rgba(255, 255, 255, 0.14) transparent;
+                        }
+
+                        &.active {
+                            background-color: rgba(255, 255, 255, 0.08);
+                            color: rgba(255, 255, 255, 0.92);
+                            border-color: rgba(255, 255, 255, 0.16) rgba(255, 255, 255, 0.16) transparent;
+                            position: relative;
+
+                            &::after {
+                                content: "";
+                                position: absolute;
+                                left: 10px;
+                                right: 10px;
+                                bottom: -2px;
+                                height: 2px;
+                                background: #8D0000;
+                                border-radius: 999px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

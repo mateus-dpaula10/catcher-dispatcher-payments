@@ -200,170 +200,6 @@
                                 </div>
                             </div>
                         </form>
-
-                        {{-- ADMIN: ADICIONAR USUÁRIO --}}
-                        @if ($isAdmin)
-                            <div class="mt-4">
-                                <div class="card-glass" style="border-radius:16px;">
-                                    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom"
-                                        style="border-color: rgba(255,255,255,.10)!important;">
-                                        <div>
-                                            <div class="fw-semibold text-white">Adicionar usuário</div>
-                                            <div class="small section-subtitle">Crie um novo usuário para acessar o painel
-                                            </div>
-                                        </div>
-
-                                        <button class="btn btn-outline-soft btn-sm" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#collapseAddUser"
-                                            aria-expanded="false" aria-controls="collapseAddUser">
-                                            Abrir
-                                        </button>
-                                    </div>
-
-                                    <div class="collapse" id="collapseAddUser">
-                                        <div class="p-4">
-                                            {{-- Ajuste a rota conforme seu projeto --}}
-                                            <form method="POST" action="{{ route('profile.store') }}" enctype="multipart/form-data">
-                                                @csrf
-
-                                                <div class="row g-4">
-                                                    <div class="col-12 col-lg-4">
-                                                        <label class="form-label">Foto do usuário</label>
-
-                                                        <div class="d-flex align-items-center gap-3">
-                                                            <div class="avatar">
-                                                                <img id="newUserAvatarPreview"
-                                                                    src="{{ asset('img/user_default.png') }}"
-                                                                    alt="Foto do novo usuário">
-                                                            </div>
-
-                                                            <div class="flex-grow-1">
-                                                                <input class="form-control" type="file" name="avatar"
-                                                                    id="newUserAvatarInput" accept="image/*">
-                                                                <div class="small section-subtitle mt-2">
-                                                                    PNG/JPG. Recomendado: 400×400.
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-12 col-lg-8">
-                                                        <div class="row g-3">
-                                                            <div class="col-12">
-                                                                <label class="form-label">Nome</label>
-                                                                <input type="text" class="form-control" name="name"
-                                                                    required value="{{ old('name_user') }}"
-                                                                    placeholder="Nome do usuário">
-                                                            </div>
-
-                                                            <div class="col-12">
-                                                                <label class="form-label">E-mail</label>
-                                                                <input type="email" class="form-control" name="email"
-                                                                    required value="{{ old('email_user') }}"
-                                                                    placeholder="email@dominio.com" inputmode="email">
-                                                            </div>
-
-                                                            <div class="col-12">
-                                                                <label class="form-label">Nível</label>
-                                                                <select class="form-select" name="level" required>
-                                                                    <option value="user">Usuário</option>
-                                                                    <option value="admin">Admin</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-12">
-                                                        <div class="card-glass" style="padding:16px; border-radius:16px;">
-                                                            <div
-                                                                class="d-flex justify-content-between align-items-center mb-2">
-                                                                <div>
-                                                                    <div class="fw-semibold text-white">Senha do usuário
-                                                                    </div>
-                                                                    <div class="small section-subtitle">Gere uma senha
-                                                                        forte e copie para enviar ao usuário</div>
-                                                                </div>
-
-                                                                <button type="button" class="btn btn-outline-soft btn-sm"
-                                                                    id="btnGeneratePassUser">
-                                                                    Gerar senha
-                                                                </button>
-                                                            </div>
-
-                                                            <div class="row g-3">
-                                                                <div class="col-12 col-md-6">
-                                                                    <label class="form-label">Senha</label>
-                                                                    <div class="input-group">
-                                                                        <span class="input-group-text" aria-hidden="true">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                width="16" height="16"
-                                                                                fill="currentColor" viewBox="0 0 16 16">
-                                                                                <path
-                                                                                    d="M8 1a3 3 0 0 0-3 3v3H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm2 6V4a2 2 0 1 0-4 0v3h4z" />
-                                                                            </svg>
-                                                                        </span>
-
-                                                                        <input type="password" class="form-control"
-                                                                            id="newUserPassword" name="password" required
-                                                                            autocomplete="new-password"
-                                                                            placeholder="Senha do usuário">
-
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-soft"
-                                                                            id="toggleNewUserPassword"
-                                                                            aria-label="Mostrar senha">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                width="18" height="18"
-                                                                                fill="currentColor" viewBox="0 0 16 16">
-                                                                                <path
-                                                                                    d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
-                                                                            </svg>
-                                                                        </button>
-                                                                    </div>
-
-                                                                    <div class="strength-wrap">
-                                                                        <div class="strength-bar">
-                                                                            <div class="strength-fill"
-                                                                                id="strengthFillUser"></div>
-                                                                        </div>
-                                                                        <div class="strength-text" id="strengthTextUser">
-                                                                            Força: —</div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-12 col-md-6">
-                                                                    <label class="form-label">Confirmar senha</label>
-                                                                    <input type="password" class="form-control"
-                                                                        id="newUserPasswordConfirmation"
-                                                                        name="password_confirmation" required
-                                                                        autocomplete="new-password"
-                                                                        placeholder="Repita a senha">
-                                                                </div>
-
-                                                                <div class="col-12 d-flex gap-2 flex-wrap">
-                                                                    <button type="submit"
-                                                                        class="btn btn-brand px-4 text-white">
-                                                                        Criar usuário
-                                                                    </button>
-
-                                                                    <button type="button" class="btn btn-outline-soft"
-                                                                        data-bs-toggle="collapse"
-                                                                        data-bs-target="#collapseAddUser"
-                                                                        aria-expanded="true"
-                                                                        aria-controls="collapseAddUser">
-                                                                        Cancelar
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -377,218 +213,216 @@
 
 @push('scripts')
     <script>
-        // Preview da foto (perfil)
-        (function() {
-            const input = document.getElementById('avatarInput');
-            const img = document.getElementById('avatarPreview');
+        // ============================
+        // Helpers
+        // ============================
+        function genStrongPassword(len = 14) {
+            const lower = "abcdefghijklmnopqrstuvwxyz";
+            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const nums = "0123456789";
+            const sym = "!@#$%^&*()-_=+[]{};:,.?";
+            const all = lower + upper + nums + sym;
+
+            let out = "";
+            out += lower[Math.floor(Math.random() * lower.length)];
+            out += upper[Math.floor(Math.random() * upper.length)];
+            out += nums[Math.floor(Math.random() * nums.length)];
+            out += sym[Math.floor(Math.random() * sym.length)];
+
+            for (let i = out.length; i < len; i++) {
+                out += all[Math.floor(Math.random() * all.length)];
+            }
+
+            // shuffle
+            return out.split("").sort(() => Math.random() - 0.5).join("");
+        }
+
+        function passwordScore(p) {
+            if (!p) return 0;
+
+            let s = 0;
+            const len = p.length;
+
+            // tamanho
+            if (len >= 8) s += 1;
+            if (len >= 12) s += 1;
+            if (len >= 16) s += 1;
+
+            // variedade
+            if (/[a-z]/.test(p)) s += 1;
+            if (/[A-Z]/.test(p)) s += 1;
+            if (/[0-9]/.test(p)) s += 1;
+            if (/[^A-Za-z0-9]/.test(p)) s += 1;
+
+            // penaliza repetição
+            if (/^(.)\1+$/.test(p)) s = 1;
+
+            return Math.min(s, 7);
+        }
+
+        function renderStrength(passValue, fillEl, textEl) {
+            if (!fillEl || !textEl) return;
+
+            const s = passwordScore(passValue);
+            const pct = Math.round((s / 7) * 100);
+
+            fillEl.style.width = pct + "%";
+
+            if (!passValue) {
+                fillEl.style.backgroundColor = "rgba(255,255,255,.20)";
+                textEl.textContent = "Força: —";
+                return;
+            }
+
+            if (pct <= 30) fillEl.style.backgroundColor = "rgba(220,53,69,.95)";
+            else if (pct <= 60) fillEl.style.backgroundColor = "rgba(255,193,7,.95)";
+            else fillEl.style.backgroundColor = "rgba(46,160,67,.95)";
+
+            let label = "—";
+            if (pct <= 30) label = "Fraca";
+            else if (pct <= 60) label = "Média";
+            else label = "Forte";
+
+            textEl.textContent = "Força: " + label;
+        }
+
+        function bindAvatarPreview(inputId, imgId) {
+            const input = document.getElementById(inputId);
+            const img = document.getElementById(imgId);
             if (!input || !img) return;
 
-            input.addEventListener('change', () => {
+            input.addEventListener("change", () => {
                 const file = input.files && input.files[0];
                 if (!file) return;
                 img.src = URL.createObjectURL(file);
             });
-        })();
+        }
 
-        // Mostrar/ocultar senha (perfil)
-        (function() {
-            const btn = document.getElementById('togglePassword');
-            const input = document.getElementById('password');
+        function bindTogglePassword(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            const input = document.getElementById(inputId);
             if (!btn || !input) return;
 
-            btn.addEventListener('click', () => {
-                const isPass = input.type === 'password';
-                input.type = isPass ? 'text' : 'password';
-                btn.setAttribute('aria-label', isPass ? 'Ocultar senha' : 'Mostrar senha');
+            btn.addEventListener("click", () => {
+                const isPass = input.type === "password";
+                input.type = isPass ? "text" : "password";
+                btn.setAttribute("aria-label", isPass ? "Ocultar senha" : "Mostrar senha");
             });
-        })();
+        }
 
-        // Gerar senha (perfil)
-        (function() {
-            const btn = document.getElementById('btnGeneratePass');
-            const pass = document.getElementById('password');
-            const conf = document.getElementById('password_confirmation');
+        function bindPasswordGenerator(btnId, passId, confId, strengthFillId, strengthTextId) {
+            const btn = document.getElementById(btnId);
+            const pass = document.getElementById(passId);
+            const conf = document.getElementById(confId);
+            const fill = document.getElementById(strengthFillId);
+            const text = document.getElementById(strengthTextId);
             if (!btn || !pass) return;
 
-            function gen(len = 14) {
-                const lower = "abcdefghijklmnopqrstuvwxyz";
-                const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                const nums = "0123456789";
-                const sym = "!@#$%^&*()-_=+[]{};:,.?";
-                const all = lower + upper + nums + sym;
-
-                let out = "";
-                out += lower[Math.floor(Math.random() * lower.length)];
-                out += upper[Math.floor(Math.random() * upper.length)];
-                out += nums[Math.floor(Math.random() * nums.length)];
-                out += sym[Math.floor(Math.random() * sym.length)];
-
-                for (let i = out.length; i < len; i++) out += all[Math.floor(Math.random() * all.length)];
-                return out.split('').sort(() => Math.random() - 0.5).join('');
-            }
-
-            btn.addEventListener('click', () => {
-                const p = gen(14);
+            btn.addEventListener("click", () => {
+                const p = genStrongPassword(14);
                 pass.value = p;
                 if (conf) conf.value = p;
-                pass.dispatchEvent(new Event('input'));
+
+                // atualiza força
+                renderStrength(pass.value, fill, text);
+
+                // dispara para listeners existentes
+                pass.dispatchEvent(new Event("input"));
                 pass.focus();
             });
-        })();
+        }
 
-        // Força de senha (perfil)
-        (function() {
-            const pass = document.getElementById('password');
-            const fill = document.getElementById('strengthFill');
-            const text = document.getElementById('strengthText');
+        function bindStrengthWatcher(passId, strengthFillId, strengthTextId) {
+            const pass = document.getElementById(passId);
+            const fill = document.getElementById(strengthFillId);
+            const text = document.getElementById(strengthTextId);
             if (!pass || !fill || !text) return;
 
-            function score(p) {
-                if (!p) return 0;
-                let s = 0;
-                const len = p.length;
+            pass.addEventListener("input", () => renderStrength(pass.value, fill, text));
+            renderStrength(pass.value, fill, text);
+        }
 
-                if (len >= 8) s += 1;
-                if (len >= 12) s += 1;
-                if (len >= 16) s += 1;
+        // ============================
+        // PERFIL (usuário logado)
+        // ============================
+        bindAvatarPreview("avatarInput", "avatarPreview");
+        bindTogglePassword("togglePassword", "password");
+        bindPasswordGenerator("btnGeneratePass", "password", "password_confirmation", "strengthFill", "strengthText");
+        bindStrengthWatcher("password", "strengthFill", "strengthText");
 
-                if (/[a-z]/.test(p)) s += 1;
-                if (/[A-Z]/.test(p)) s += 1;
-                if (/[0-9]/.test(p)) s += 1;
-                if (/[^A-Za-z0-9]/.test(p)) s += 1;
+        // ============================
+        // ADMIN - NOVO USUÁRIO
+        // ============================
+        bindAvatarPreview("newUserAvatarInput", "newUserAvatarPreview");
+        bindTogglePassword("toggleNewUserPassword", "newUserPassword");
+        bindPasswordGenerator(
+            "btnGeneratePassUser",
+            "newUserPassword",
+            "newUserPasswordConfirmation",
+            "strengthFillUser",
+            "strengthTextUser"
+        );
+        bindStrengthWatcher("newUserPassword", "strengthFillUser", "strengthTextUser");
 
-                if (/^(.)\1+$/.test(p)) s = 1;
-                return Math.min(s, 7);
+        // ============================
+        // ADMIN - EDITAR USUÁRIOS (modais)
+        // - suporta quantos usuários existirem
+        // IDs esperados:
+        //  editAvatarInput-{id}, editAvatarPreview-{id}
+        //  editPassword-{id}, editStrengthFill-{id}, editStrengthText-{id}
+        // Botão de gerar senha no modal: .btnGenUserPass (com data-targets) [se você usou o bloco que mandei]
+        // ============================
+
+        // Preview avatar em qualquer modal (delegação)
+        document.addEventListener("change", function(e) {
+            const el = e.target;
+            if (!el || !el.id) return;
+
+            if (el.id.startsWith("editAvatarInput-")) {
+                const userId = el.id.replace("editAvatarInput-", "");
+                const img = document.getElementById("editAvatarPreview-" + userId);
+                const file = el.files && el.files[0];
+                if (img && file) img.src = URL.createObjectURL(file);
             }
+        });
 
-            function render(p) {
-                const s = score(p);
-                const pct = Math.round((s / 7) * 100);
-                fill.style.width = pct + "%";
+        // Força de senha em qualquer modal enquanto digita (delegação)
+        document.addEventListener("input", function(e) {
+            const el = e.target;
+            if (!el || !el.id) return;
 
-                if (pct <= 30) fill.style.backgroundColor = "rgba(220,53,69,.95)";
-                else if (pct <= 60) fill.style.backgroundColor = "rgba(255,193,7,.95)";
-                else fill.style.backgroundColor = "rgba(46,160,67,.95)";
-
-                let label = "—";
-                if (!p) label = "—";
-                else if (pct <= 30) label = "Fraca";
-                else if (pct <= 60) label = "Média";
-                else label = "Forte";
-
-                text.textContent = "Força: " + label;
+            if (el.id.startsWith("editPassword-")) {
+                const userId = el.id.replace("editPassword-", "");
+                const fill = document.getElementById("editStrengthFill-" + userId);
+                const text = document.getElementById("editStrengthText-" + userId);
+                renderStrength(el.value, fill, text);
             }
+        });
 
-            pass.addEventListener('input', () => render(pass.value));
-            render(pass.value);
-        })();
+        // Gerar senha em modais (delegação via data-attributes)
+        document.addEventListener("click", function(e) {
+            const btn = e.target.closest(".btnGenUserPass");
+            if (!btn) return;
 
-        // ---------------------------
-        // ADMIN: Preview avatar usuário
-        // ---------------------------
-        (function() {
-            const input = document.getElementById('newUserAvatarInput');
-            const img = document.getElementById('newUserAvatarPreview');
-            if (!input || !img) return;
+            const passSel = btn.getAttribute("data-target");
+            const confSel = btn.getAttribute("data-target-confirm");
+            const fillSel = btn.getAttribute("data-strength-fill");
+            const textSel = btn.getAttribute("data-strength-text");
 
-            input.addEventListener('change', () => {
-                const file = input.files && input.files[0];
-                if (!file) return;
-                img.src = URL.createObjectURL(file);
-            });
-        })();
+            const pass = passSel ? document.querySelector(passSel) : null;
+            const conf = confSel ? document.querySelector(confSel) : null;
+            const fill = fillSel ? document.querySelector(fillSel) : null;
+            const text = textSel ? document.querySelector(textSel) : null;
 
-        // Admin: mostrar/ocultar senha novo usuário
-        (function() {
-            const btn = document.getElementById('toggleNewUserPassword');
-            const input = document.getElementById('newUserPassword');
-            if (!btn || !input) return;
+            if (!pass) return;
 
-            btn.addEventListener('click', () => {
-                const isPass = input.type === 'password';
-                input.type = isPass ? 'text' : 'password';
-                btn.setAttribute('aria-label', isPass ? 'Ocultar senha' : 'Mostrar senha');
-            });
-        })();
+            const p = genStrongPassword(14);
+            pass.value = p;
+            if (conf) conf.value = p;
 
-        // Admin: gerar senha novo usuário
-        (function() {
-            const btn = document.getElementById('btnGeneratePassUser');
-            const pass = document.getElementById('newUserPassword');
-            const conf = document.getElementById('newUserPasswordConfirmation');
-            if (!btn || !pass) return;
-
-            function gen(len = 14) {
-                const lower = "abcdefghijklmnopqrstuvwxyz";
-                const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                const nums = "0123456789";
-                const sym = "!@#$%^&*()-_=+[]{};:,.?";
-                const all = lower + upper + nums + sym;
-
-                let out = "";
-                out += lower[Math.floor(Math.random() * lower.length)];
-                out += upper[Math.floor(Math.random() * upper.length)];
-                out += nums[Math.floor(Math.random() * nums.length)];
-                out += sym[Math.floor(Math.random() * sym.length)];
-
-                for (let i = out.length; i < len; i++) out += all[Math.floor(Math.random() * all.length)];
-                return out.split('').sort(() => Math.random() - 0.5).join('');
-            }
-
-            btn.addEventListener('click', () => {
-                const p = gen(14);
-                pass.value = p;
-                if (conf) conf.value = p;
-                pass.dispatchEvent(new Event('input'));
-                pass.focus();
-            });
-        })();
-
-        // Admin: força de senha novo usuário
-        (function() {
-            const pass = document.getElementById('newUserPassword');
-            const fill = document.getElementById('strengthFillUser');
-            const text = document.getElementById('strengthTextUser');
-            if (!pass || !fill || !text) return;
-
-            function score(p) {
-                if (!p) return 0;
-                let s = 0;
-                const len = p.length;
-
-                if (len >= 8) s += 1;
-                if (len >= 12) s += 1;
-                if (len >= 16) s += 1;
-
-                if (/[a-z]/.test(p)) s += 1;
-                if (/[A-Z]/.test(p)) s += 1;
-                if (/[0-9]/.test(p)) s += 1;
-                if (/[^A-Za-z0-9]/.test(p)) s += 1;
-
-                if (/^(.)\1+$/.test(p)) s = 1;
-                return Math.min(s, 7);
-            }
-
-            function render(p) {
-                const s = score(p);
-                const pct = Math.round((s / 7) * 100);
-                fill.style.width = pct + "%";
-
-                if (pct <= 30) fill.style.backgroundColor = "rgba(220,53,69,.95)";
-                else if (pct <= 60) fill.style.backgroundColor = "rgba(255,193,7,.95)";
-                else fill.style.backgroundColor = "rgba(46,160,67,.95)";
-
-                let label = "—";
-                if (!p) label = "—";
-                else if (pct <= 30) label = "Fraca";
-                else if (pct <= 60) label = "Média";
-                else label = "Forte";
-
-                text.textContent = "Força: " + label;
-            }
-
-            pass.addEventListener('input', () => render(pass.value));
-            render(pass.value);
-        })();
+            renderStrength(pass.value, fill, text);
+            pass.dispatchEvent(new Event("input"));
+            pass.focus();
+        });
     </script>
 @endpush

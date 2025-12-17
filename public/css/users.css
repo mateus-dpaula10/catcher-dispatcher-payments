@@ -9,12 +9,12 @@
   --focus: rgba(141, 0, 0, .55);
 }
 
-#profile_index {
+#users_index {
   /* avatar */
   /* password strength */
   /* readonly look */
 }
-#profile_index .card-glass {
+#users_index .card-glass {
   border: 1px solid var(--cardBorder);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
   backdrop-filter: blur(10px);
@@ -23,81 +23,81 @@
   overflow: hidden;
   border-radius: 0;
 }
-#profile_index .section-title {
+#users_index .section-title {
   color: var(--text);
   letter-spacing: 0.2px;
 }
-#profile_index .section-subtitle {
+#users_index .section-subtitle {
   color: var(--muted);
 }
-#profile_index .form-label,
-#profile_index .form-check-label {
+#users_index .form-label,
+#users_index .form-check-label {
   color: rgba(255, 255, 255, 0.78);
 }
-#profile_index .form-control,
-#profile_index .form-select {
+#users_index .form-control,
+#users_index .form-select {
   background: var(--field);
   border: 1px solid var(--fieldBorder);
   color: var(--text);
 }
-#profile_index .form-select option {
+#users_index .form-select option {
   color: initial;
 }
-#profile_index .form-control::-moz-placeholder {
+#users_index .form-control::-moz-placeholder {
   color: rgba(255, 255, 255, 0.45);
 }
-#profile_index .form-control::placeholder {
+#users_index .form-control::placeholder {
   color: rgba(255, 255, 255, 0.45);
 }
-#profile_index .form-control:focus,
-#profile_index .form-select:focus {
+#users_index .form-control:focus,
+#users_index .form-select:focus {
   border-color: var(--focus);
   box-shadow: 0 0 0 0.25rem rgba(141, 0, 0, 0.2);
 }
-#profile_index .input-group-text {
+#users_index .input-group-text {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--fieldBorder);
   color: rgba(255, 255, 255, 0.75);
 }
-#profile_index .btn-brand {
+#users_index .btn-brand {
   background: linear-gradient(180deg, #A50000, var(--brand));
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 10px 22px rgba(141, 0, 0, 0.25);
   font-weight: 600;
 }
-#profile_index .btn-brand:hover {
+#users_index .btn-brand:hover {
   filter: brightness(1.06);
   transform: translateY(-1px);
 }
-#profile_index .btn-brand:active {
+#users_index .btn-brand:active {
   transform: translateY(0);
 }
-#profile_index .btn-outline-soft {
+#users_index .btn-outline-soft {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.85);
 }
-#profile_index .btn-outline-soft:hover {
+#users_index .btn-outline-soft:hover {
   background: rgba(255, 255, 255, 0.1);
 }
-#profile_index .alert-danger {
+#users_index .alert-danger {
   background: rgba(141, 0, 0, 0.14);
   border: 1px solid rgba(141, 0, 0, 0.32);
   color: rgba(255, 255, 255, 0.9);
 }
-#profile_index .alert-success {
+#users_index .alert-success {
   background: rgba(46, 160, 67, 0.14);
   border: 1px solid rgba(46, 160, 67, 0.32);
   color: rgba(255, 255, 255, 0.92);
 }
-#profile_index .btn-close {
+#users_index .btn-close {
   filter: invert(1) grayscale(1);
   opacity: 0.8;
 }
-#profile_index .btn-close:hover {
+#users_index .btn-close:hover {
   opacity: 1;
 }
-#profile_index .avatar {
+#users_index .avatar {
   width: 110px;
   height: 110px;
   border-radius: 50%;
@@ -105,33 +105,33 @@
   overflow: hidden;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
 }
-#profile_index .avatar img {
+#users_index .avatar img {
   width: 100%;
   height: 100%;
   -o-object-fit: cover;
      object-fit: cover;
   display: block;
 }
-#profile_index .strength-wrap {
+#users_index .strength-wrap {
   margin-top: 8px;
 }
-#profile_index .strength-bar {
+#users_index .strength-bar {
   height: 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.1);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-#profile_index .strength-fill {
+#users_index .strength-fill {
   height: 100%;
   width: 0%;
   transition: width 0.18s ease, background-color 0.18s ease;
 }
-#profile_index .strength-text {
+#users_index .strength-text {
   color: rgba(255, 255, 255, 0.7);
   font-size: 12px;
   margin-top: 6px;
 }
-#profile_index .readonly {
+#users_index .readonly {
   opacity: 0.9;
-}/*# sourceMappingURL=profile.css.map */
+}/*# sourceMappingURL=users.css.map */

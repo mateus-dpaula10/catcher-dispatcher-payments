@@ -16,56 +16,6 @@ class ProfileController extends Controller
         return view('profile.index');
     }
 
-    public function store(Request $request)
-    {
-        $auth = Auth::user();
-
-        if (!$auth || !$auth->isAdmin()) {
-            abort(403);
-        }
-
-        $rules = [
-            'name'  => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', Rule::unique('users', 'email')],
-            'level' => ['required', Rule::in(['user', 'admin'])],
-
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-
-            'avatar' => ['nullable', 'image', 'max:2048'],
-        ];
-
-        $messages = [
-            'name.required' => 'Informe o nome do usuário.',
-            'email.required' => 'Informe o e-mail do usuário.',
-            'email.email' => 'Digite um e-mail válido.',
-            'email.unique' => 'Este e-mail já está em uso.',
-            'level.required' => 'Informe o nível.',
-            'level.in' => 'Nível inválido.',
-            'password.required' => 'Informe a senha.',
-            'password.min' => 'A senha deve ter pelo menos :min caracteres.',
-            'password.confirmed' => 'A confirmação da senha não confere.',
-            'avatar.image' => 'A foto precisa ser uma imagem (JPG/PNG/WebP).',
-            'avatar.max' => 'A foto deve ter no máximo 2MB.',
-        ];
-
-        $data = $request->validate($rules, $messages);
-
-        $newUser = new User();
-        $newUser->name = $data['name'];
-        $newUser->email = $data['email'];
-        $newUser->level = $data['level'];
-        $newUser->password = Hash::make($data['password']);
-
-        if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $newUser->avatar_path = $path;
-        }
-
-        $newUser->save();
-
-        return back()->with('success', 'Usuário criado com sucesso.');
-    }
-
     public function update(Request $request)
     {
         $user = Auth::user();

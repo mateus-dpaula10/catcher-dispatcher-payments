@@ -31,6 +31,9 @@
                 <a href="{{ route('dashboard.index') }}">Dashboard</a>
             </li>
             <li>
+                <a href="{{ route('t.index') }}">E-mail tracking</a>
+            </li>
+            <li>
                 <a href="{{ route('profile.index') }}">Perfil</a>
             </li>
             @if (auth()->user()->level === 'admin')

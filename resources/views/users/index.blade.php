@@ -194,6 +194,7 @@
                                                                                     </div>
                                                                                 </div>
 
+                                                                                {{-- ✅ agora funciona no accordion (JS usa data-user como fallback) --}}
                                                                                 <button type="button"
                                                                                     class="btn btn-outline-soft btn-sm btnGenUserPass"
                                                                                     data-user="{{ $u->id }}">
@@ -205,12 +206,31 @@
                                                                                 <div class="col-12 col-md-6">
                                                                                     <label class="form-label">Nova
                                                                                         senha</label>
-                                                                                    <input type="password"
-                                                                                        class="form-control userPassInput"
-                                                                                        id="editPassword-{{ $u->id }}"
-                                                                                        name="password"
-                                                                                        autocomplete="new-password"
-                                                                                        placeholder="Nova senha (opcional)">
+
+                                                                                    {{-- ✅ input com "olho" para visualizar senha --}}
+                                                                                    <div class="input-group">
+                                                                                        <input type="password"
+                                                                                            class="form-control userPassInput"
+                                                                                            id="editPassword-{{ $u->id }}"
+                                                                                            name="password"
+                                                                                            autocomplete="new-password"
+                                                                                            placeholder="Nova senha (opcional)">
+
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-soft btnToggleUserPass"
+                                                                                            data-target="#editPassword-{{ $u->id }}"
+                                                                                            aria-label="Mostrar senha"
+                                                                                            title="Mostrar/ocultar senha">
+                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                width="18" height="18"
+                                                                                                fill="currentColor"
+                                                                                                viewBox="0 0 16 16">
+                                                                                                <path
+                                                                                                    d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+                                                                                            </svg>
+                                                                                        </button>
+                                                                                    </div>
+
                                                                                     <div class="strength-wrap">
                                                                                         <div class="strength-bar">
                                                                                             <div class="strength-fill"
@@ -564,7 +584,7 @@
                 renderStrength(pass.value, fill, text);
 
                 // dispara para listeners existentes
-                pass.dispatchEvent(new Event("input"));
+                pass.dispatchEvent(new Event("input", { bubbles: true }));
                 pass.focus();
             });
         }
@@ -602,15 +622,10 @@
         bindStrengthWatcher("newUserPassword", "strengthFillUser", "strengthTextUser");
 
         // ============================
-        // ADMIN - EDITAR USUÁRIOS (modais)
-        // - suporta quantos usuários existirem
-        // IDs esperados:
-        //  editAvatarInput-{id}, editAvatarPreview-{id}
-        //  editPassword-{id}, editStrengthFill-{id}, editStrengthText-{id}
-        // Botão de gerar senha no modal: .btnGenUserPass (com data-targets) [se você usou o bloco que mandei]
+        // ADMIN - EDITAR USUÁRIOS (accordion)
         // ============================
 
-        // Preview avatar em qualquer modal (delegação)
+        // Preview avatar em qualquer accordion (delegação)
         document.addEventListener("change", function(e) {
             const el = e.target;
             if (!el || !el.id) return;
@@ -623,7 +638,7 @@
             }
         });
 
-        // Força de senha em qualquer modal enquanto digita (delegação)
+        // Força de senha em qualquer accordion enquanto digita (delegação)
         document.addEventListener("input", function(e) {
             const el = e.target;
             if (!el || !el.id) return;
@@ -636,20 +651,48 @@
             }
         });
 
-        // Gerar senha em modais (delegação via data-attributes)
+        // ✅ Mostrar/ocultar senha no accordion (delegação)
+        document.addEventListener("click", function(e) {
+            const btn = e.target.closest(".btnToggleUserPass");
+            if (!btn) return;
+
+            const targetSel = btn.getAttribute("data-target");
+            if (!targetSel) return;
+
+            const input = document.querySelector(targetSel);
+            if (!input) return;
+
+            const isPass = input.type === "password";
+            input.type = isPass ? "text" : "password";
+            btn.setAttribute("aria-label", isPass ? "Ocultar senha" : "Mostrar senha");
+        });
+
+        // ✅ Gerar senha no accordion (funciona com data-targets OU com data-user)
         document.addEventListener("click", function(e) {
             const btn = e.target.closest(".btnGenUserPass");
             if (!btn) return;
 
+            // 1) tenta via data-targets (caso exista)
             const passSel = btn.getAttribute("data-target");
             const confSel = btn.getAttribute("data-target-confirm");
             const fillSel = btn.getAttribute("data-strength-fill");
             const textSel = btn.getAttribute("data-strength-text");
 
-            const pass = passSel ? document.querySelector(passSel) : null;
-            const conf = confSel ? document.querySelector(confSel) : null;
-            const fill = fillSel ? document.querySelector(fillSel) : null;
-            const text = textSel ? document.querySelector(textSel) : null;
+            let pass = passSel ? document.querySelector(passSel) : null;
+            let conf = confSel ? document.querySelector(confSel) : null;
+            let fill = fillSel ? document.querySelector(fillSel) : null;
+            let text = textSel ? document.querySelector(textSel) : null;
+
+            // 2) fallback: usa data-user e resolve pelos IDs do seu accordion
+            if (!pass) {
+                const userId = btn.getAttribute("data-user");
+                if (!userId) return;
+
+                pass = document.getElementById("editPassword-" + userId);
+                conf = document.getElementById("editPasswordConfirmation-" + userId);
+                fill = document.getElementById("editStrengthFill-" + userId);
+                text = document.getElementById("editStrengthText-" + userId);
+            }
 
             if (!pass) return;
 
@@ -658,7 +701,7 @@
             if (conf) conf.value = p;
 
             renderStrength(pass.value, fill, text);
-            pass.dispatchEvent(new Event("input"));
+            pass.dispatchEvent(new Event("input", { bubbles: true }));
             pass.focus();
         });
     </script>

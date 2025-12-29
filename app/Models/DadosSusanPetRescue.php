@@ -38,6 +38,11 @@ class DadosSusanPetRescue extends Model
         'utm_term',
         'pix_key',
         'pix_description',
+
+        '_country',
+        '_region_code',
+        '_region',
+        '_city'
     ];
 
     protected $casts = [

@@ -1,0 +1,109 @@
+#email_tracking_index .card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 0;
+  overflow: hidden;
+}
+#email_tracking_index .card > .card-body {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+  color: rgba(255, 255, 255, 0.92);
+}
+#email_tracking_index .card > .card-body .text-muted,
+#email_tracking_index .card > .card-body .small.text-muted {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+#email_tracking_index .card > .card-body .form-label,
+#email_tracking_index .card > .card-body .form-check-label {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+#email_tracking_index .card > .card-body .form-control {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+}
+#email_tracking_index .card > .card-body .form-control::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+#email_tracking_index .card > .card-body .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+#email_tracking_index .card > .card-body .form-control:focus {
+  border-color: rgba(141, 0, 0, 0.55);
+  box-shadow: 0 0 0 0.25rem rgba(141, 0, 0, 0.2);
+}
+#email_tracking_index .card > .card-body .btn.btn-primary {
+  background: linear-gradient(180deg, #A50000, #8D0000);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 22px rgba(141, 0, 0, 0.25);
+  font-weight: 600;
+}
+#email_tracking_index .card > .card-body .btn.btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+#email_tracking_index .card > .card-body .btn.btn-primary:active {
+  transform: translateY(0);
+}
+#email_tracking_index .card > .card-body .table-responsive {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 8px;
+}
+#email_tracking_index .card > .card-body #tabelaEmails {
+  min-width: 1400px;
+}
+#email_tracking_index .card > .card-body #tabelaEmails td,
+#email_tracking_index .card > .card-body #tabelaEmails th {
+  white-space: nowrap;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+#email_tracking_index .card > .card-body #tabelaEmails tr {
+  line-height: 1.1;
+}
+#email_tracking_index .card > .card-body .collapse-row table td,
+#email_tracking_index .card > .card-body .collapse-row table th {
+  white-space: nowrap;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+#email_tracking_index .card > .card-body .collapse-row table tr {
+  line-height: 1.1;
+}
+#email_tracking_index .card > .card-body #tabelaEmails {
+  color: rgba(255, 255, 255, 0.9);
+}
+#email_tracking_index .card > .card-body #tabelaEmails thead th {
+  font-weight: 600;
+}
+#email_tracking_index .card > .card-body .pagination-wrapper {
+  padding: 10px 0;
+}
+#email_tracking_index .card > .card-body .pagination .page-item.active .page-link {
+  background-color: #8D0000;
+  border-color: #8D0000;
+  color: #FFF;
+}
+#email_tracking_index .card > .card-body .pagination .page-link {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.82);
+}
+#email_tracking_index .card > .card-body .pagination .page-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+#email_tracking_index .card > .card-body .pagination .page-item.disabled .page-link {
+  color: rgba(255, 255, 255, 0.45);
+}
+#email_tracking_index .card > .card-body .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+}
+#email_tracking_index .card > .card-body code {
+  color: rgba(255, 255, 255, 0.85);
+}/*# sourceMappingURL=email_tracking_dashboard.css.map */

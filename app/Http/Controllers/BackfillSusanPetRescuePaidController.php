@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\DadosSusanPetRescue;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -351,5 +352,99 @@ class BackfillSusanPetRescuePaidController extends Controller
             'http_status' => $res->status(),
             'body' => $res->json(),
         ];
+    }
+
+    public function sendOne(Request $request)
+    {
+        $this->authorizeBackfill($request);
+
+        $dryRun  = $request->boolean('dry_run', false);
+
+        $externalId = $request->input('external_id');
+        $id         = $request->input('id');
+
+        if (!$externalId && !$id) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Informe external_id ou id.',
+            ], 422);
+        }
+
+        $query = DadosSusanPetRescue::query();
+
+        if ($externalId) {
+            $query->where('external_id', (string) $externalId);
+        } else {
+            $query->where('id', (int) $id);
+        }
+
+        $dado = $query->first();
+
+        if (!$dado) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Registro não encontrado.',
+                'search' => [
+                    'external_id' => $externalId,
+                    'id' => $id,
+                ],
+            ], 404);
+        }
+
+        $targets = [
+            'b1s' => 'facebook_capi_susan_pet_rescue_b1s',
+            'b2s' => 'facebook_capi_susan_pet_rescue_b2s',
+        ];
+
+        $results = [];
+
+        foreach ($targets as $label => $serviceKey) {
+            $creds = [
+                'pixel_id'     => config("services.{$serviceKey}.pixel_id"),
+                'access_token' => config("services.{$serviceKey}.access_token"),
+                'service_key'  => $serviceKey,
+            ];
+
+            if (!$creds['pixel_id'] || !$creds['access_token']) {
+                Log::warning("Backfill CAPI: credenciais ausentes ({$label})", [
+                    'label' => $label,
+                    'service_key' => $serviceKey,
+                    'pixel_id' => $creds['pixel_id'],
+                    'hasToken' => !empty($creds['access_token']),
+                    'external_id' => $dado->external_id ?? null,
+                    'id' => $dado->id ?? null,
+                ]);
+
+                $results[$label] = [
+                    'ok' => false,
+                    'reason' => 'missing_creds',
+                    'service_key' => $serviceKey,
+                    'pixel_id' => $creds['pixel_id'],
+                ];
+                continue;
+            }
+
+            // Reusa sua função existente (monta payload e envia)
+            $results[$label] = $this->sendCapiForDado($dado, $creds, $dryRun);
+        }
+
+
+        return response()->json([
+            'ok' => true,
+            'mode' => 'send-one',
+            'cred' => 'b1s+b2s',
+            'dry_run' => $dryRun,
+            'record' => [
+                'id' => $dado->id ?? null,
+                'external_id' => $dado->external_id ?? null,
+                'status' => $dado->status ?? null,
+                'amount' => $dado->amount ?? null,
+                'updated_at' => optional($dado->updated_at)->toIso8601String(),
+            ],
+            'sent' => [
+                'ok' => true,
+                'results' => $results,
+            ],
+        ], 200);
     }
 }

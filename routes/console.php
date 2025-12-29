@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 
 Schedule::command('backup:susan-pet-rescue-table')->dailyAt('00:00');
 Schedule::command('backup:susan-table')->dailyAt('00:00');
+// Schedule::command('queue:drain-mails --connection=database --queue=default')
+//     ->everyMinute()
+//     ->withoutOverlapping()
+//     ->runInBackground();

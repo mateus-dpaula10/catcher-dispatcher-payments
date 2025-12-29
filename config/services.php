@@ -56,12 +56,12 @@ return [
 
     'utmify' => [
         'url'    => env('UTMFY_URL'),
-        'api_key'=> env('UTMFY_API_KEY'),
+        'api_key' => env('UTMFY_API_KEY'),
     ],
 
     'utmify_susan_pet_rescue' => [
         'url'    => env('UTMFY_URL_SUSAN_PET_RESCUE'),
-        'api_key'=> env('UTMFY_API_KEY_SUSAN_PET_RESCUE'),
+        'api_key' => env('UTMFY_API_KEY_SUSAN_PET_RESCUE'),
     ],
 
     'lytex' => [
@@ -71,10 +71,16 @@ return [
     'transfeera' => [
         'api_key' => env('TRANSFEERA_API_KEY'),
         'client_id' => env('TRANSFEERA_CLIENT_ID'),
-        'client_secret' => env('TRANSFEERA_CLIENT_SECRET') 
+        'client_secret' => env('TRANSFEERA_CLIENT_SECRET')
     ],
 
     'givewp' => [
         'secret' => env('GIVEWP_SECRET'),
     ],
+
+    'paypal' => [
+        'base_url' => env('PAYPAL_BASE_URL', 'https://api-m.paypal.com'),
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+    ]
 ];

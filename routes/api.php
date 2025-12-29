@@ -9,6 +9,7 @@ use App\Http\Controllers\LytexController;
 use App\Http\Controllers\TransfeeraAutoPixController;
 use App\Http\Controllers\PaidSusanPetRescueController;
 use App\Http\Controllers\BackfillSusanPetRescuePaidController;
+use App\Http\Controllers\BackfillSusanPetRescuePaidControllerUtmify;
 
 Route::post('/checkout', [CheckoutController::class, 'handle']);
 Route::post('/transfeera', [TransfeeraWebhookController::class, 'handle']);
@@ -18,7 +19,14 @@ Route::post('/lytex/invoice', [LytexController::class, 'createInvoice']);
 Route::post('/automatic-pix/create-authorization', [TransfeeraAutoPixController::class, 'createAuthorization']);
 
 Route::post('/checkout-susan-pet-rescue', [CheckoutController::class, 'handleSusanPetRescue']);
-Route::post('/paid-susan-pet-rescue', [PaidSusanPetRescueController::class, 'paid']);
+Route::post('/checkout-susan-pet-rescue-donor', [CheckoutController::class, 'handleSusanPetRescueDonor']);
 
-Route::post('/spr/backfill/capi/test-first', [BackfillSusanPetRescuePaidController::class, 'testFirst']);
-Route::post('/spr/backfill/capi/run', [BackfillSusanPetRescuePaidController::class, 'run']);
+Route::post('/paid-susan-pet-rescue', [PaidSusanPetRescueController::class, 'paid']);
+Route::post('/paid-susan-pet-rescue-donor', [PaidSusanPetRescueController::class, 'paidDonor']);
+
+// Route::post('/spr/backfill/capi/test-first', [BackfillSusanPetRescuePaidController::class, 'testFirst']);
+// Route::post('/spr/backfill/capi/run', [BackfillSusanPetRescuePaidController::class, 'run']);
+// Route::post('/spr/backfill/capi/send-one', [BackfillSusanPetRescuePaidController::class, 'sendOne']);
+
+// routes/api.php (ou routes/web.php se preferir)
+// Route::post('/susan/utmify/resend-one', [BackfillSusanPetRescuePaidControllerUtmify::class, 'resendUtmifyOne']);

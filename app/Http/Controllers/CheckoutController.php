@@ -242,6 +242,24 @@ class CheckoutController extends Controller
             foreach ($payload as $k => $v) {
                 if ($v !== null) $payloadToUpdate[$k] = $v;
             }
+            
+            // ==================================================
+            // ✅ [NOVO] Anti-downgrade: se já está PAID, IC atrasado não volta status
+            // ==================================================
+            try {
+                $existing = DadosSusanPetRescue::where('external_id', $externalId)->first();
+                if ($existing) {
+                    $currentStatus = strtolower((string)($existing->status ?? ''));
+                    $incomingStatus = strtolower((string)($payloadToUpdate['status'] ?? ''));
+            
+                    // se já é paid, não deixa status virar initiate_checkout
+                    if ($currentStatus === 'paid' && in_array($incomingStatus, ['initiate_checkout', 'checkout', 'ic'], true)) {
+                        unset($payloadToUpdate['status']);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // não quebra fluxo
+            }
 
             $row = DadosSusanPetRescue::updateOrCreate(
                 ['external_id' => $externalId],

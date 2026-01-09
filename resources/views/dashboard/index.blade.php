@@ -52,31 +52,43 @@
 
                             <div class="row g-2 align-items-end">
                                 {{-- Data base --}}
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">Data</label>
                                     <input type="date" name="data" class="form-control" value="{{ request('data') }}">
                                 </div>
 
-                                {{-- Checkbox período --}}
+                                {{-- Hora início --}}
                                 <div class="col-md-2">
+                                    <label class="form-label">Hora início</label>
+                                    <input type="time" name="hora_ini" class="form-control"
+                                        value="{{ request('hora_ini') }}">
+                                </div>
+
+                                {{-- Hora fim --}}
+                                <div class="col-md-2">
+                                    <label class="form-label">Hora fim</label>
+                                    <input type="time" name="hora_fim" class="form-control"
+                                        value="{{ request('hora_fim') }}">
+                                </div>
+
+                                {{-- Checkbox período --}}
+                                <div class="col-md-1">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="periodo" value="1"
                                             id="chkPeriodo" {{ $useRange ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="chkPeriodo">
-                                            Período
-                                        </label>
+                                        <label class="form-check-label" for="chkPeriodo">Período</label>
                                     </div>
                                 </div>
 
                                 {{-- Data fim (só se período) --}}
-                                <div class="col-md-3" id="col-data-fim" style="{{ $useRange ? '' : 'display:none;' }}">
+                                <div class="col-md-2" id="col-data-fim" style="{{ $useRange ? '' : 'display:none;' }}">
                                     <label class="form-label">Data fim</label>
                                     <input type="date" name="data_fim" class="form-control"
                                         value="{{ request('data_fim') }}">
                                 </div>
 
                                 {{-- Busca --}}
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">Pesquisar</label>
                                     <input type="text" name="search" class="form-control" placeholder="Buscar..."
                                         value="{{ request('search') }}">
@@ -114,8 +126,8 @@
                                 <div class="col-12" id="col-status">
                                     <div class="d-flex align-items-center gap-3 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="status_all" value="1"
-                                                id="chkStatusAll"
+                                            <input class="form-check-input" type="checkbox" name="status_all"
+                                                value="1" id="chkStatusAll"
                                                 {{ $statusAll || (!$statusAll && empty($selectedStatus)) ? 'checked' : '' }}>
                                             <label class="form-check-label" for="chkStatusAll">Todos</label>
                                         </div>
@@ -129,9 +141,9 @@
                                                 <div class="col-md-3 col-6">
                                                     <div class="form-check d-flex align-items-center gap-2">
                                                         <div class="d-flex align-items-center gap-2">
-                                                            <input class="form-check-input chk-status-item" type="checkbox"
-                                                                name="status_in[]" value="{{ $st }}"
-                                                                id="st_{{ md5($st) }}"
+                                                            <input class="form-check-input chk-status-item"
+                                                                type="checkbox" name="status_in[]"
+                                                                value="{{ $st }}" id="st_{{ md5($st) }}"
                                                                 {{ in_array($st, $selectedStatus, true) ? 'checked' : '' }}>
                                                             <label class="form-check-label mb-0"
                                                                 for="st_{{ md5($st) }}">{{ $st }}</label>
@@ -355,17 +367,12 @@
                         @endif
 
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover align-middle" id="tabelaDados">
+                            <table class="table table-hover align-middle table-striped" id="tabelaDados">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>created_at</th>
                                         <th>updated_at</th>
-                                        @if ($currentTab === 'susan')
-                                            <th>external_id</th>
-                                            <th>give_payment_id</th>
-                                            <th>currency</th>
-                                        @endif
                                         <th>status</th>
                                         <th>amount</th>
                                         <th>amount_cents</th>
@@ -376,32 +383,33 @@
                                         <th>phone</th>
                                         <th>cpf</th>
                                         <th>ip</th>
+                                        <td>country</td>
                                         <th>event_time</th>
+                                        <th>utm_campaign</th>
                                         <th>page_url</th>
                                         <th>client_user_agent</th>
                                         <th>fbp</th>
                                         <th>fbc</th>
                                         <th>fbclid</th>
                                         <th>utm_source</th>
-                                        <th>utm_campaign</th>
                                         <th>utm_medium</th>
                                         <th>utm_content</th>
                                         <th>utm_term</th>
                                         <th>Chave pix</th>
                                         <th>Descrição pix</th>
+                                        @if ($currentTab === 'susan')
+                                            <th>external_id</th>
+                                            <th>give_payment_id</th>
+                                            <th>currency</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($dados as $index => $dado)
-                                        <tr>
+                                        <tr class="{{ $dado->amount >= 200 ? 'table-success' : '' }}">
                                             <td>{{ $dados->firstItem() + $index }}</td>
                                             <td>{{ $dado->created_at ?? 'N/A' }}</td>
                                             <td>{{ $dado->updated_at ?? 'N/A' }}</td>
-                                            @if ($currentTab === 'susan')
-                                                <td>{{ $dado->external_id ?? 'N/A' }}</td>
-                                                <td>{{ $dado->give_payment_id ?? 'N/A' }}</td>
-                                                <td>{{ $dado->currency ?? 'N/A' }}</td>
-                                            @endif
                                             <td>{{ $dado->status ?? 'N/A' }}</td>
                                             <td>{{ $dado->amount ?? 'N/A' }}</td>
                                             <td>{{ $dado->amount_cents ?? 'N/A' }}</td>
@@ -412,21 +420,33 @@
                                             <td>{{ $dado->phone ?? 'N/A' }}</td>
                                             <td>{{ $dado->cpf ?? 'N/A' }}</td>
                                             <td>{{ $dado->ip ?? 'N/A' }}</td>
+                                            <td>{{ $dado->_country ?? 'N/A' }}</td>
                                             <td>{{ $dado->event_time ?? 'N/A' }}</td>
+                                            <td>{{ $dado->utm_campaign ?? 'N/A' }}</td>
                                             <td>{{ $dado->page_url ?? 'N/A' }}</td>
                                             <td>{{ $dado->client_user_agent ?? 'N/A' }}</td>
                                             <td>{{ $dado->fbp ?? 'N/A' }}</td>
                                             <td>{{ $dado->fbc ?? 'N/A' }}</td>
                                             <td>{{ $dado->fbclid ?? 'N/A' }}</td>
                                             <td>{{ $dado->utm_source ?? 'N/A' }}</td>
-                                            <td>{{ $dado->utm_campaign ?? 'N/A' }}</td>
                                             <td>{{ $dado->utm_medium ?? 'N/A' }}</td>
                                             <td>{{ $dado->utm_content ?? 'N/A' }}</td>
                                             <td>{{ $dado->utm_term ?? 'N/A' }}</td>
                                             <td>{{ $dado->pix_key ?? 'N/A' }}</td>
                                             <td>{{ $dado->pix_description ?? 'N/A' }}</td>
+                                            @if ($currentTab === 'susan')
+                                                <td>{{ $dado->external_id ?? 'N/A' }}</td>
+                                                <td>{{ $dado->give_payment_id ?? 'N/A' }}</td>
+                                                <td>{{ $dado->currency ?? 'N/A' }}</td>
+                                            @endif
                                         </tr>
                                     @endforeach
+
+                                    <style>
+                                        .row-amount-hight {
+                                            background-color: yellow;
+                                        }
+                                    </style>
                                 </tbody>
                             </table>
                         </div>

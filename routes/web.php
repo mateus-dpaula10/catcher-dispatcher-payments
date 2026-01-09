@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
@@ -19,6 +19,10 @@ Route::middleware('guest')->group(function () {
         ->where('token', '[A-Za-z0-9]{32,80}')
         ->where('key', '[A-Za-z0-9_\-]{1,40}')
         ->name('t.click');
+
+    Route::get('/paypal/sandbox', function() {
+        return view ('paypal.sandbox');
+    });
 });
 
 Route::middleware('auth')->group(function () {
@@ -38,3 +42,4 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+

@@ -79,8 +79,13 @@ return [
     ],
 
     'paypal' => [
-        'base_url' => env('PAYPAL_BASE_URL', 'https://api-m.paypal.com'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
         'client_id' => env('PAYPAL_CLIENT_ID'),
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+        'verify_webhook'=> env('PAYPAL_VERIFY_WEBHOOK', true),
+
+        'test_secret'   => env('PAYPAL_WEBHOOK_TEST_SECRET', '')
     ]
 ];

@@ -49,35 +49,39 @@
             <!-- Header -->
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#8d0000"
                 class="force-gold"
-                style="background:#8d0000;color:#ffffff;font-family:Poppins,Arial,Helvetica,sans-serif;">
+                style="background:#8d0000;color:#ffffff;font-family:Poppins,Arial,Helvetica,sans-serif;mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;">
                 <tr>
-                    <td bgcolor="#8d0000"
-                        style="padding:12px 16px;background:#8d0000;font-family:Poppins,Arial,Helvetica,sans-serif;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                    <td bgcolor="#8d0000" style="padding:12px 16px;background:#8d0000;font-family:Poppins,Arial,Helvetica,sans-serif;">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                            style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;">
                             <tr>
-                                <!-- Logo -->
-                                <td align="left" valign="middle"
-                                    style="vertical-align:middle;line-height:0;font-size:0;">
-                                    <a href="{{ $link('site', 'https://susanpetrescue.org/') }}" target="_blank"
-                                        rel="noopener" title="Susan Pet Rescue"
-                                        style="text-decoration:none;display:inline-block;">
-                                        <img src="https://susanpetrescue.org/wp-content/uploads/2025/12/Susan-Pet-Rescue-vermelha.png"
-                                            alt="Susan Pet Rescue" width="45"
-                                            style="display:block;border:0;outline:none;text-decoration:none;border-radius:4px;width:135px;height:auto;-ms-interpolation-mode:bicubic;">
-                                    </a>
-                                </td>
+                                <td valign="middle" style="vertical-align:middle;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                        <tr>
+                                            <!-- Logo -->
+                                            <td valign="middle" style="vertical-align:middle; line-height:0; font-size:0;">
+                                                <a href="{{ $link('site', 'https://susanpetrescue.org/') }}" target="_blank" rel="noopener"
+                                                    title="Susan Pet Rescue" style="text-decoration:none;display:inline-block;">
+                                                    <img src="https://susanpetrescue.org/wp-content/uploads/2025/12/Susan-Pet-Rescue-vermelha.png"
+                                                        alt="Susan Pet Rescue" width="85"
+                                                        style="display:block;border:0;outline:none;text-decoration:none;border-radius:4px;height:auto;-ms-interpolation-mode:bicubic;">
+                                                </a>
+                                            </td>
 
-                                <!-- Date + email -->
-                                <td align="right" valign="middle" class="mobile-center"
-                                    style="vertical-align:middle;font-size:14px;line-height:1.4;color:#ffffff;font-family:Poppins,Arial,Helvetica,sans-serif;word-break:break-word;">
-                                    <div
-                                        style="opacity:.95;color:#ffffff;font-family:Poppins,Arial,Helvetica,sans-serif;">
-                                        <strong>{{ $humanNow }}</strong>
-                                    </div>
-                                    <a href="mailto:contact@susanpetrescue.com"
-                                        style="color:#ffffff;text-decoration:none;font-family:Poppins,Arial,Helvetica,sans-serif;">
-                                        contact@susanpetrescue.com
-                                    </a>
+                                            <!-- Date + email -->
+                                            <td valign="middle" align="right" style="vertical-align:middle; padding-left:16px;">
+                                                <div style="opacity:.95;color:#ffffff;font-family:Poppins,Arial,Helvetica,sans-serif;font-size:14px;line-height:1.4;word-break:break-word;">
+                                                    <strong>{{ $humanNow }}</strong>
+                                                </div>
+                                                <div style="font-size:14px;line-height:1.4;word-break:break-word;">
+                                                    <a href="mailto:contact@susanpetrescue.com"
+                                                        style="color:#ffffff;text-decoration:none;font-family:Poppins,Arial,Helvetica,sans-serif;">
+                                                        contact@susanpetrescue.com
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
                         </table>
@@ -135,8 +139,7 @@
                             <tr>
                                 <td bgcolor="#8d0000" class="force-gold"
                                     style="background:#8d0000;border-radius:8px;font-family:Poppins,Arial,Helvetica,sans-serif;">
-                                    <a href="{{ $link('contact', 'https://susanpetrescue.org/about-us') }}"
-                                        target="_blank" rel="noopener"
+                                    <a href="mailto:contact@susanpetrescue.com"
                                         style="display:inline-block;padding:12px 18px;font-weight:600;font-size:14px;
                             color:#ffffff;text-decoration:none;background:#8d0000;border-radius:8px;font-family:Poppins,Arial,Helvetica,sans-serif;">
                                         Any questions? Contact us here
@@ -147,8 +150,7 @@
 
                         <p
                             style="margin:10px 0 0 0;font-size:12.5px;color:#111111;font-family:Poppins,Arial,Helvetica,sans-serif;">
-                            If you have any questions about your donation, please contact us via email; we will respond
-                            within <strong>10 minutes</strong>.
+                            If you have any questions about your donation, please contact us via email.
                         </p>
 
                         <hr style="border:none;border-top:1px solid #CCCCCC;margin:20px 0;">

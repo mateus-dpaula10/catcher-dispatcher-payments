@@ -101,42 +101,26 @@ class PayPalService
     }
 
     /**
-     * Capture Order (Orders v2)
-     *
-     * ✅ Ajuste principal:
-     * - PayPal /capture NÃO deve receber array [] nem body vazio "quebrado".
-     * - Forçamos body "{}" (JSON objeto), evitando MALFORMED_REQUEST_JSON.
+     * Fetch a PayPal order (Orders v2)
      */
-    public function captureOrder(string $orderId, ?string $requestId = null): array
+    public function fetchOrder(string $orderId): array
     {
-        $requestId = $requestId ?: (string) \Illuminate\Support\Str::uuid();
-    
-        $url  = $this->baseUrl() . "/v2/checkout/orders/{$orderId}/capture";
-        $body = "{}"; // ✅ PayPal gosta de objeto JSON
-    
-        Log::info('PayPalService captureOrder - outgoing', [
-            'order_id'   => $orderId,
-            'url'        => $url,
-            'request_id' => $requestId,
-            'body'       => $body,
+        $url = $this->baseUrl() . "/v2/checkout/orders/{$orderId}";
+
+        Log::info('PayPalService fetchOrder - outgoing', [
+            'order_id' => $orderId,
+            'url' => $url,
         ]);
-    
-        $res = \Illuminate\Support\Facades\Http::withToken($this->accessToken())
+
+        $res = Http::withToken($this->accessToken())
             ->acceptJson()
-            ->withHeaders([
-                'PayPal-Request-Id' => $requestId,
-                'Content-Type'      => 'application/json',
-                'Accept'            => 'application/json',
-            ])
-            ->withBody($body, 'application/json')   // ✅ aqui é o ponto
-            ->send('POST', $url);                   // ✅ send + withBody
-    
+            ->get($url);
+
         return [
-            'ok'         => $res->successful(),
-            'status'     => $res->status(),
-            'json'       => $res->json(),
-            'raw'        => $res->body(),
-            'request_id' => $requestId,
+            'ok' => $res->ok(),
+            'status' => $res->status(),
+            'json' => $res->json(),
+            'raw' => $res->body(),
         ];
     }
 

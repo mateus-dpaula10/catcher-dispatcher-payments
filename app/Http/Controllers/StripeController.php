@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use App\Jobs\SendDonationPaidEmail;
 use App\Models\DadosSusanPetRescue;
+use App\Models\EmailMessage;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use Stripe\PaymentIntent;
@@ -16,80 +18,6 @@ use Stripe\Webhook;
 
 class StripeController extends Controller
 {
-    public function createCheckoutSession(Request $request)
-    {
-        $amount   = (float) $request->input('amount', 0);
-        $currency = strtoupper((string) $request->input('currency', 'USD'));
-        $period   = (string) $request->input('period', 'one_time'); // one_time|monthly
-
-        if ($amount <= 0) return response()->json(['message' => 'Invalid amount'], 422);
-
-        $externalId = (string) $request->input('external_id', '');
-        if (!$externalId) return response()->json(['message' => 'Missing external_id'], 422);
-
-        $email = (string) $request->input('email', '');
-
-        Stripe::setApiKey(env('STRIPE_SECRET'));
-
-        // volta sempre para a página origem (susanpetrescue.org)
-        $successUrl = 'https://susanpetrescue.org/';
-        $cancelUrl  = 'https://susanpetrescue.org/';
-
-        $metadata = [
-            'external_id' => $externalId,
-            'period'      => $period,
-            'page_url'    => (string) $request->input('page_url', ''),
-            'utm_source'  => (string) $request->input('utm_source', ''),
-            'utm_medium'  => (string) $request->input('utm_medium', ''),
-            'utm_campaign'=> (string) $request->input('utm_campaign', ''),
-            'utm_content' => (string) $request->input('utm_content', ''),
-            'utm_term'    => (string) $request->input('utm_term', ''),
-            'utm_id'      => (string) $request->input('utm_id', ''),
-            'fbclid'      => (string) $request->input('fbclid', ''),
-            'gclid'       => (string) $request->input('gclid', ''),
-        ];
-
-        $amountCents = (int) round($amount * 100);
-
-        $lineItem = [
-            'quantity' => 1,
-            'price_data' => [
-                'currency' => strtolower($currency),
-                'product_data' => ['name' => 'Donation'],
-                'unit_amount' => $amountCents,
-            ],
-        ];
-
-        $mode = 'payment';
-        if ($period === 'monthly') {
-            $mode = 'subscription';
-            $lineItem['price_data']['recurring'] = ['interval' => 'month'];
-        }
-
-        $sessionPayload = [
-            'mode' => $mode,
-            'success_url' => $successUrl,
-            'cancel_url' => $cancelUrl,
-            'customer_email' => $email ?: null,
-            'line_items' => [$lineItem],
-            'metadata' => $metadata,
-        ];
-
-        if ($mode === 'payment') {
-            $sessionPayload['payment_intent_data'] = [
-                'metadata' => $metadata,
-            ];
-        } else {
-            $sessionPayload['subscription_data'] = [
-                'metadata' => $metadata,
-            ];
-        }
-
-        $session = Session::create($sessionPayload);
-
-        return response()->json(['id' => $session->id]);
-    }
-
     public function createPaymentIntent(Request $request)
     {
         // Payload do front
@@ -695,5 +623,205 @@ class StripeController extends Controller
         }
 
         return response('OK', 200);
+    }
+
+    public function mail(Request $request)
+    {
+        $payloadRaw = $request->getContent();
+        $sig = $request->header('Stripe-Signature');
+
+        Log::info('Stripe mail webhook raw payload', [
+            'body' => $payloadRaw,
+            'ip' => $request->ip(),
+            'ua' => $request->userAgent(),
+            'headers' => [
+                'stripe-signature' => $sig,
+                'content-type' => $request->header('Content-Type'),
+            ],
+        ]);
+
+        try {
+            $event = Webhook::constructEvent($payloadRaw, $sig, env('STRIPE_WEBHOOK_SECRET_MAIL'));
+        } catch (\Throwable $e) {
+            return response('Invalid', 400);
+        }
+
+        $eventType = (string) ($event->type ?? '');
+        if ($eventType !== 'payment_intent.succeeded') {
+            return response('OK', 200);
+        }
+
+        $intent = $event->data->object ?? null;
+        if (!$intent) {
+            return response('OK', 200);
+        }
+
+        $intentId = (string) ($intent->id ?? '');
+
+        $meta = [];
+        if (isset($intent->metadata)) {
+            if (is_array($intent->metadata)) {
+                $meta = $intent->metadata;
+            } elseif (is_object($intent->metadata) && method_exists($intent->metadata, 'toArray')) {
+                $meta = (array) $intent->metadata->toArray();
+            } else {
+                $meta = (array) $intent->metadata;
+            }
+        }
+
+        $pickMeta = function (string $k, $default = '') use ($meta) {
+            if (array_key_exists($k, $meta) && $meta[$k] !== null && $meta[$k] !== '') return $meta[$k];
+            return $default;
+        };
+
+        $charge = null;
+        if (isset($intent->charges) && isset($intent->charges->data) && is_array($intent->charges->data) && count($intent->charges->data) > 0) {
+            $charge = $intent->charges->data[0];
+        }
+
+        $billing = $charge->billing_details ?? null;
+        $chargeEmail = (string) ($billing->email ?? '');
+        $chargeName  = (string) ($billing->name ?? '');
+        $chargePhone = (string) ($billing->phone ?? '');
+
+        $period = strtolower(trim((string) $pickMeta('period', 'one_time')));
+        $isMonthlyMode = in_array($period, ['month', 'monthly'], true);
+
+        $firstName = (string) $pickMeta('first_name', '');
+        $lastName  = (string) $pickMeta('last_name', '');
+        $email     = (string) $pickMeta('email', '');
+        $phone     = (string) $pickMeta('phone', '');
+
+        if ($email === '' && $chargeEmail !== '') $email = $chargeEmail;
+        if ($phone === '' && $chargePhone !== '') $phone = $chargePhone;
+        if ($firstName === '' && $lastName === '' && $chargeName !== '') {
+            $parts = preg_split('/\s+/', trim($chargeName));
+            if (!empty($parts)) {
+                $firstName = array_shift($parts) ?: '';
+                $lastName  = trim(implode(' ', $parts));
+            }
+        }
+
+        $currency = strtoupper((string) ($intent->currency ?? 'USD'));
+        $amountCents = (int) ($intent->amount_received ?? $intent->amount ?? 0);
+        $amount = (float) ($amountCents / 100);
+
+        if ($amount < 1) {
+            Log::info('Stripe mail webhook: invalid amount', [
+                'amount' => $amount,
+                'intent_id' => $intentId ?: null,
+            ]);
+            return response('OK', 200);
+        }
+
+        $eventTime = (int) ($intent->created ?? time());
+        if ($eventTime <= 0) $eventTime = time();
+
+        $symbolByCurrency = ['USD' => '$', 'BRL' => 'R$'];
+        $moneySymbol = $symbolByCurrency[$currency] ?? '$';
+        $amountFormatted = number_format($amount, 2, '.', '');
+
+        $externalIdFinal = (string) $pickMeta('external_id', '');
+        if ($externalIdFinal === '' && $intentId !== '') {
+            $externalIdFinal = 'st_' . $intentId;
+        }
+
+        $payload = [
+            'external_id' => $externalIdFinal,
+            'status' => 'paid',
+            'amount' => $amount,
+            'amount_cents' => $amountCents,
+            'currency' => $currency,
+            'first_name' => $firstName ?: null,
+            'last_name' => $lastName ?: null,
+            'payer_name' => trim($firstName . ' ' . $lastName) ?: null,
+            'email' => $email ?: null,
+            'phone' => $phone ?: null,
+        ];
+
+        $this->queueDonationPaidEmail(
+            $payload,
+            $isMonthlyMode,
+            $intentId,
+            $moneySymbol,
+            $amountFormatted,
+            $eventTime
+        );
+
+        return response('OK', 200);
+    }
+
+    private function queueDonationPaidEmail(
+        array $payload,
+        bool $isMonthlyMode,
+        string $intentId,
+        string $moneySymbol,
+        string $amountFormatted,
+        int $eventTime
+    ): void {
+        $amountLabel = "{$moneySymbol}{$amountFormatted}";
+        $donatedAtHuman = $eventTime ? date('M d, Y H:i', (int) $eventTime) : now()->format('M d, Y H:i');
+
+        $toEmail = (string) ($payload['email'] ?? '');
+        $isValidEmail = filter_var($toEmail, FILTER_VALIDATE_EMAIL);
+
+        if (!$isValidEmail) {
+            Log::warning('Stripe webhook - invalid email, skipping receipt', [
+                'external_id' => $payload['external_id'] ?? null,
+                'email' => $toEmail ?: null,
+                'intent_id' => $intentId ?: null,
+            ]);
+            return;
+        }
+
+        $alreadySent = EmailMessage::where('external_id', (string) ($payload['external_id'] ?? ''))
+            ->where('to_email', $toEmail)
+            ->exists();
+
+        if ($alreadySent) {
+            Log::info('Stripe webhook - email already sent', [
+                'external_id' => $payload['external_id'] ?? null,
+                'to' => $toEmail,
+            ]);
+            return;
+        }
+
+        $token = Str::random(64);
+        $links = [
+            'site' => 'https://susanpetrescue.org/',
+            'facebook' => 'https://www.facebook.com/susanpetrescue',
+            'instagram' => 'https://www.instagram.com/susanpetrescue',
+            'contact' => 'https://susanpetrescue.org/about-us',
+        ];
+
+        EmailMessage::create([
+            'token' => $token,
+            'external_id' => (string) ($payload['external_id'] ?? ''),
+            'to_email' => $toEmail,
+            'subject' => 'Thank you for your donation!',
+            'sent_at' => now(),
+            'links' => $links,
+        ]);
+
+        $emailData = [
+            'subject' => 'Thank you for your donation!',
+            'human_now' => now()->format('M d, Y H:i'),
+            'payer_name' => $payload['payer_name'] ?? 'friend',
+            'email' => $toEmail,
+            'amount_label' => $amountLabel,
+            'external_id' => (string) ($payload['external_id'] ?? ''),
+            'donation_id' => $intentId !== '' ? $intentId : (string) ($payload['external_id'] ?? ''),
+            'donated_at' => $donatedAtHuman,
+            'method' => $isMonthlyMode ? 'stripe recurring' : 'stripe',
+            'track_token' => $token,
+        ];
+
+        SendDonationPaidEmail::dispatch($toEmail, $emailData);
+
+        Log::info('Stripe webhook - email queued', [
+            'to' => $toEmail,
+            'external_id' => $payload['external_id'] ?? null,
+            'intent_id' => $intentId ?: null,
+        ]);
     }
 }

@@ -44,6 +44,8 @@ class EmailTrackingController extends Controller
             });
         }
 
+        $q->whereHas('events');
+
         // para mostrar eventos por linha (sem N+1 pesado)
         $messages = $q->with(['events' => function ($e) {
             $e->orderBy('id', 'desc')->limit(50);
@@ -59,6 +61,9 @@ class EmailTrackingController extends Controller
             SUM(click_count) as clicks
         ')->first();
 
+        $opensAtLeastOne = (clone $q)->where('open_count', '>', 0)->count();
+        $clicksTotal = (int) (clone $q)->sum('click_count');
+
         $totaisGerais = EmailMessage::selectRaw('
             COUNT(*) as total,
             SUM(open_count) as opens,
@@ -69,6 +74,8 @@ class EmailTrackingController extends Controller
             'messages' => $messages,
             'totaisGerais' => $totaisGerais,
             'totaisFiltrados' => $totaisFiltrados,
+            'opensAtLeastOne' => $opensAtLeastOne,
+            'clicksTotal' => $clicksTotal,
         ]);
     }
 
@@ -88,10 +95,11 @@ class EmailTrackingController extends Controller
             $lastAt = $msg->last_opened_at ? \Carbon\Carbon::parse($msg->last_opened_at) : null;
             $tooSoon = $lastAt && $lastAt->diffInSeconds($now) < 10;
 
+            $msg->last_opened_at = $now;
+
             if (!$tooSoon) {
                 $msg->open_count = (int) $msg->open_count + 1;
                 $msg->first_opened_at = $msg->first_opened_at ?: $now;
-                $msg->last_opened_at  = $now;
 
                 // opcional: salvar último ip/ua pra debug rápido no painel
                 if (property_exists($msg, 'last_ip')) $msg->last_ip = $ip;
@@ -112,6 +120,8 @@ class EmailTrackingController extends Controller
                     // se você tiver a coluna, ótimo:
                     // 'is_proxy'       => $isGoogleProxy,
                 ]);
+            } else {
+                $msg->save();
             }
         }
 
@@ -135,7 +145,17 @@ class EmailTrackingController extends Controller
         $msg = EmailMessage::where('token', $token)->firstOrFail();
         $links = (array)($msg->links ?? []);
 
+        $defaultLinks = [
+            'site' => 'https://susanpetrescue.org/',
+            'facebook' => 'https://www.facebook.com/susanpetrescue',
+            'instagram' => 'https://www.instagram.com/susanpetrescue',
+            'contact' => 'https://susanpetrescue.org/about-us',
+        ];
+
         $target = (string)($links[$key] ?? '');
+        if ($target === '' && isset($defaultLinks[$key])) {
+            $target = $defaultLinks[$key];
+        }
         if ($target === '' || !preg_match('#^https?://#i', $target)) {
             abort(404);
         }

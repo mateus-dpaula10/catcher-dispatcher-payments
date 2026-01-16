@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TransfeeraWebhookController extends Controller
 {
@@ -15,7 +16,7 @@ class TransfeeraWebhookController extends Controller
         try {
             $event = $request->all();
 
-            \Log::info("Transfeera Webhook Recebido", $event);
+            Log::info("Transfeera Webhook Recebido", $event);
 
             // -------------------------------------------------------------------
             // PING da Transfeera → obrigatório retornar 200
@@ -61,7 +62,7 @@ class TransfeeraWebhookController extends Controller
 
             return $response; // Retorna o que o controller chamado retornar
         } catch (\Exception $e) {
-            \Log::error("Erro não tratado no webhook", ['error' => $e->getMessage(), 'payload' => $request->all()]);
+            Log::error("Erro não tratado no webhook", ['error' => $e->getMessage(), 'payload' => $request->all()]);
 
             return response()->json([
                 'error' => 'Unhandled error',

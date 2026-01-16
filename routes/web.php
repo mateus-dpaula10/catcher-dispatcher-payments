@@ -5,7 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
-use App\http\Controllers\EmailTrackingController;
+use App\Http\Controllers\EmailTrackingController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'index'])->name('login');
@@ -42,4 +42,3 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
-

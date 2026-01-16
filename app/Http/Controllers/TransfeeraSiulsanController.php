@@ -132,7 +132,7 @@ class TransfeeraSiulsanController extends Controller
 
         if ($dado->status === 'paid' && $dado->amount >= 1) {
             // -----------------------------
-            // Normalização e hash dos dados do usuário
+            // NormalizaÃ§Ã£o e hash dos dados do usuÃ¡rio
             // -----------------------------
             $normalize = fn($str) => strtolower(trim($str));
             
@@ -172,12 +172,12 @@ class TransfeeraSiulsanController extends Controller
             ];
 
             // -----------------------------
-            // Função para gerar event_id único
+            // FunÃ§Ã£o para gerar event_id Ãºnico
             // -----------------------------
             $generateEventId = fn() => bin2hex(random_bytes(16)); 
 
             // -----------------------------
-            // Construção do payload para os 3 eventos
+            // ConstruÃ§Ã£o do payload para os 3 eventos
             // -----------------------------
             $eventsToSend = ['Purchase', 'Donate'];
 
@@ -194,32 +194,59 @@ class TransfeeraSiulsanController extends Controller
                 ];
             }
 
-            $capiPayload = [
-                'data' => $dataEvents,
-                'access_token' => config('services.facebook_capi.access_token'),
-            ];
+            $targets = [];
+            $camp = (string) ($dado->utm_campaign ?? '');
 
-            $pixelId = config('services.facebook_capi.pixel_id');
+            if (stripos($camp, 'B1S') !== false) {
+                $targets = ['b1s' => 'facebook_capi_siulsan_resgate_b1s'];
+            } elseif (stripos($camp, 'B2S') !== false) {
+                $targets = ['b2s' => 'facebook_capi_siulsan_resgate_b2s'];
+            } else {
+                Log::warning('utm_campaign sem B1S/B2S - CAPI nǜo enviado', [
+                    'utm_campaign' => $dado->utm_campaign ?? null,
+                    'id' => $dado->id ?? null,
+                ]);
+            }
 
-            if ($pixelId && $capiPayload['access_token']) {
-                Log::info('CAPI Payload recebido:', $capiPayload);
+            foreach ($targets as $label => $serviceKey) {
+                $pixelId = config("services.{$serviceKey}.pixel_id");
+                $apiToken = config("services.{$serviceKey}.access_token");
+
+                if (!$pixelId || !$apiToken) {
+                    Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN nǜo configurados ({$label})", [
+                        'service' => $serviceKey,
+                        'pixelId' => $pixelId,
+                        'hasToken' => !empty($apiToken),
+                    ]);
+                    continue;
+                }
+
+                $capiPayload = [
+                    'data' => $dataEvents,
+                    'access_token' => $apiToken,
+                ];
+
+                Log::info("CAPI Payload recebido ({$label})", [
+                    'pixel_id' => $pixelId,
+                ]);
 
                 $res = Http::withHeaders(['Content-Type' => 'application/json'])
                     ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
 
-                Log::info("Facebook CAPI response", [
+                Log::info("Facebook CAPI response ({$label})", [
+                    'pixel_id' => $pixelId,
                     'status' => $res->status(),
-                    'body'   => $res->body(),
-                ]);
-            } else {
-                Log::warning('PIXEL_ID ou FACEBOOK_ACCESS_TOKEN não configurados', [
-                    'pixelId' => $pixelId,
-                    'hasToken' => !empty($capiPayload['access_token']),
+                    'body' => $res->body(),
                 ]);
             }
         }
 
         if ($payload['status'] === 'paid') {
+            $methodPix = strtolower((string) ($payload['method'] ?? ''));
+            $productName = "SR R$ {$payload['amount']}";
+            if (str_contains($methodPix, 'auto_pix') || str_contains($methodPix, 'auto pix')) {
+                $productName .= 'R';
+            }
             $utmPayload = [
                 'orderId' => 'ord_' . substr(bin2hex(random_bytes(4)), 0, 8),
                 'platform' => 'Checkout',
@@ -239,7 +266,7 @@ class TransfeeraSiulsanController extends Controller
                 'products' => [
                     [
                         'id' => '01',
-                        'name' => "SR R$ {$payload['amount']}",
+                        'name' => $productName,
                         'planId' => (string)$payload['amount'],
                         'planName' => (string)$payload['amount'],
                         'quantity' => 1,
@@ -278,7 +305,7 @@ class TransfeeraSiulsanController extends Controller
                     'body'   => $res->body(),
                 ]);
             } else {
-                Log::warning('UTMFY_URL ou UTMFY_API_KEY não configurados', [
+                Log::warning('UTMFY_URL ou UTMFY_API_KEY nÃ£o configurados', [
                     'utmUrl' => $utmUrl,
                     'utmKey' => !empty($utmKey),
                 ]);

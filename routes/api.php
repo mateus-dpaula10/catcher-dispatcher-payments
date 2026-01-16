@@ -12,12 +12,14 @@ use App\Http\Controllers\BackfillSusanPetRescuePaidController;
 use App\Http\Controllers\BackfillSusanPetRescuePaidControllerUtmify;
 use App\Http\Controllers\PayPalController;
 use App\Http\Controllers\StripeController;
+use App\Http\Controllers\SquareController;
 
 Route::post('/checkout', [CheckoutController::class, 'handle']);
 Route::post('/transfeera', [TransfeeraWebhookController::class, 'handle']);
 Route::post('/proanimal', [TransfeeraProAnimalController::class, 'receive']);
 Route::post('/siulsan', [TransfeeraSiulsanController::class, 'receive']);
 Route::post('/lytex/invoice', [LytexController::class, 'createInvoice']);
+Route::post('/lytex/webhook', [LytexController::class, 'webhook']);
 Route::post('/automatic-pix/create-authorization', [TransfeeraAutoPixController::class, 'createAuthorization']);
 
 Route::post('/checkout-susan-pet-rescue', [CheckoutController::class, 'handleSusanPetRescue']);
@@ -26,14 +28,16 @@ Route::post('/checkout-susan-pet-rescue-donor', [CheckoutController::class, 'han
 Route::post('/paid-susan-pet-rescue', [PaidSusanPetRescueController::class, 'paid']);
 Route::post('/paid-susan-pet-rescue-donor', [PaidSusanPetRescueController::class, 'paidDonor']);
 
-Route::post('/paypal/orders', [PayPalController::class, 'createOrder']);                 // cria order
-Route::post('/paypal/orders/{orderId}/capture', [PayPalController::class, 'captureOrder']); // captura (pago)   
-Route::post('/paypal/subscriptions', [PayPalController::class, 'createSubscription']); 
+Route::post('/paypal/create-order', [PayPalController::class, 'createOrder']);         // alias para PayPal Donate SDK
 Route::post('/paypal/webhook', [PayPalController::class, 'webhook']); 
+Route::post('/paypal/donation-notify', [PayPalController::class, 'donationNotify']);
 
-Route::post('/stripe/checkout-session', [StripeController::class, 'createCheckoutSession']);
 Route::post('/stripe/payment-intent', [StripeController::class, 'createPaymentIntent']);
 Route::post('/stripe/webhook', [StripeController::class, 'handle']);
+Route::post('/stripe/webhook/mail', [StripeController::class, 'mail']);
+
+Route::post('/square/payment', [SquareController::class, 'createPayment']);
+Route::post('/square/payment/confirmed', [SquareController::class, 'handlePaid']);
 
 // Route::post('/spr/backfill/capi/test-first', [BackfillSusanPetRescuePaidController::class, 'testFirst']);
 // Route::post('/spr/backfill/capi/run', [BackfillSusanPetRescuePaidController::class, 'run']);

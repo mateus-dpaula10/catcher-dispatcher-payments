@@ -57,6 +57,55 @@
                         </form>
 
                         @if (isset($totaisGerais, $totaisFiltrados))
+                            @php
+                                $filteredTotal = (int) ($totaisFiltrados->total ?? 0);
+                                $openedOnce = (int) ($opensAtLeastOne ?? 0);
+                                $openedOncePct = $filteredTotal > 0 ? min(100, round(($openedOnce / $filteredTotal) * 100)) : 0;
+                                $notOpenedPct = 100 - $openedOncePct;
+
+                                $clicksTotal = (int) ($clicksTotal ?? 0);
+                                $clicksPossible = $filteredTotal * 4;
+                                $clicksRatio = $clicksPossible > 0 ? min(1, $clicksTotal / $clicksPossible) : 0;
+                                $clicksPct = $clicksPossible > 0 ? round($clicksRatio * 100) : 0;
+                                $noClicksPct = 100 - $clicksPct;
+                            @endphp
+
+                            <div class="row g-3 mb-3 px-3">
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body">
+                                            <div class="text-muted small mb-2">Aberturas (pelo menos 1x)</div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="pie"
+                                                    style="--pct: {{ $openedOncePct }}; --color: #198754; --bg: #e5e7eb;">
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ $openedOnce }} de {{ $filteredTotal }}</div>
+                                                    <div class="small text-muted">{{ $openedOncePct }}% abertos</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body">
+                                            <div class="text-muted small mb-2">Cliques (cap 4 por email)</div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="pie"
+                                                    style="--pct: {{ $clicksPct }}; --color: #0d6efd; --bg: #e5e7eb;">
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ $clicksTotal }} de {{ $clicksPossible }}</div>
+                                                    <div class="small text-muted">{{ $clicksPct }}% do máximo</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row g-3 mb-3 px-3">
                                 <div class="col-md-4">
                                     <div class="card border-0 shadow-sm h-100">
@@ -191,6 +240,14 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/email_tracking_dashboard.css') }}">
+    <style>
+        #email_tracking_index .pie {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: conic-gradient(var(--color) calc(var(--pct) * 1%), var(--bg) 0);
+        }
+    </style>
 @endpush
 
 @push('scripts')

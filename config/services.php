@@ -35,9 +35,14 @@ return [
         ],
     ],
 
-    'facebook_capi' => [
-        'pixel_id'      => env('PIXEL_ID'),
-        'access_token'  => env('FACEBOOK_ACCESS_TOKEN'),
+    'facebook_capi_siulsan_resgate_b1s' => [
+        'pixel_id'      => env('PIXEL_ID_SIULSAN_RESGATE_B1S'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SIULSAN_RESGATE_B1S'),
+    ],
+
+    'facebook_capi_siulsan_resgate_b2s' => [
+        'pixel_id'      => env('PIXEL_ID_SIULSAN_RESGATE_B2S'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SIULSAN_RESGATE_B2S'),
     ],
 
     'facebook_capi_susan_pet_rescue_b1s' => [
@@ -65,13 +70,19 @@ return [
     ],
 
     'lytex' => [
-        'api_key' => env('LYTEX_API_TOKEN')
+        'api_key' => env('LYTEX_API_TOKEN'),
+        'client_id' => env('LYTEX_CLIENT_ID'),
+        'client_secret' => env('LYTEX_CLIENT_SECRET'),
+        'auth_url' => env('LYTEX_AUTH_URL', 'https://sandbox-api-pay.lytex.com.br/v2/auth/obtain_token'),
+        'api_url' => env('LYTEX_API_URL', 'https://sandbox-api-pay.lytex.com.br/v2/invoices'),
+        'subscriptions_url' => env('LYTEX_SUBSCRIPTIONS_URL', 'https://sandbox-api-pay.lytex.com.br/v2/subscriptions')
     ],
 
     'transfeera' => [
         'api_key' => env('TRANSFEERA_API_KEY'),
         'client_id' => env('TRANSFEERA_CLIENT_ID'),
-        'client_secret' => env('TRANSFEERA_CLIENT_SECRET')
+        'client_secret' => env('TRANSFEERA_CLIENT_SECRET'),
+        'pix_key' => env('TRANSFEERA_PIX_KEY')
     ],
 
     'givewp' => [

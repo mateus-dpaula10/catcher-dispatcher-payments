@@ -304,14 +304,13 @@
 
 <script>
     (function () {
-        const state = {
-            orderId: null,
-            externalId: null,
-        };
-
+        const PAYPAL_DONATE_SDK = 'https://www.paypalobjects.com/donate/sdk/donate-sdk.js';
+        const PAYPAL_HOSTED_BUTTON_ID = 'YEFP7T8X23SLC';
+        const PAYPAL_NOTIFY_ENDPOINT = '/api/paypal/donation-notify';
         const logEl = document.getElementById('log');
         const statusEl = document.getElementById('statusBox');
         const orderInfoEl = document.getElementById('orderInfo');
+        const donateContainer = document.getElementById('paypalButtons');
 
         const log = (msg, obj) => {
             const line = obj ? `${msg} ${JSON.stringify(obj, null, 2)}` : msg;
@@ -319,9 +318,8 @@
         };
 
         const setStatus = (text) => { statusEl.textContent = `Status: ${text}`; };
-        const setOrder = () => {
-            const info = state.orderId ? `Order: ${state.orderId} | external_id: ${state.externalId || '-'}` : 'Order: -';
-            orderInfoEl.textContent = info;
+        const setOrderInfo = (orderId = null, externalId = null) => {
+            orderInfoEl.textContent = orderId ? `Order: ${orderId} | external_id: ${externalId || '-'}` : 'Order: -';
         };
 
         const readForm = () => ({
@@ -340,114 +338,157 @@
             fbclid: document.getElementById('fbclid').value,
         });
 
-        async function createOrder() {
-            const payload = readForm();
-            setStatus('criando order...');
-            log('createOrder payload', payload);
+        let donateSdkPromise = null;
+        let donateRenderKey = '';
 
-            const res = await fetch('/api/paypal/orders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
+        function loadDonateSdk() {
+            if (donateSdkPromise) return donateSdkPromise;
+            donateSdkPromise = new Promise((resolve, reject) => {
+                if (window.PayPal?.Donation) return resolve(window.PayPal);
+                const script = document.createElement('script');
+                script.src = PAYPAL_DONATE_SDK;
+                script.charset = 'UTF-8';
+                script.async = true;
+                script.onload = () => {
+                    if (window.PayPal?.Donation) resolve(window.PayPal);
+                    else reject(new Error('PayPal Donate SDK não disponível'));
+                };
+                script.onerror = () => reject(new Error('Falha ao carregar o PayPal Donate SDK'));
+                document.head.appendChild(script);
             });
-
-            const json = await res.json().catch(() => ({}));
-            if (!res.ok || !json.ok) {
-                log('createOrder failed', json);
-                setStatus('erro ao criar order');
-                throw new Error('createOrder failed');
-            }
-
-            state.orderId = json.id;
-            state.externalId = json.external_id || payload.external_id || null;
-            setOrder();
-            log('createOrder success', json);
-            setStatus('order criada');
-            return json.id;
+            return donateSdkPromise;
         }
 
-        async function captureOrder(orderId) {
-            if (!orderId) throw new Error('orderId vazio');
-            setStatus('capturando order...');
-
-            const body = { external_id: state.externalId };
-
-            const res = await fetch(`/api/paypal/orders/${orderId}/capture`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(body)
-            });
-
-            const json = await res.json().catch(() => ({}));
-            if (!res.ok || !json.ok) {
-                log('captureOrder failed', json);
-                setStatus('erro ao capturar');
-                throw new Error('captureOrder failed');
+        async function notifyPayPalDonation(params, amount, donorInfo) {
+            const orderId = params?.tx;
+            if (!orderId) {
+                log('notifyPayPalDonation: orderId ausente', params);
+                setStatus('ordem ausente');
+                return false;
             }
 
-            log('captureOrder success', json);
-            setStatus('captura ok');
-            return json;
-        }
+            const payload = {
+                orderId,
+                amount,
+                currency: donorInfo.currency,
+                period: donorInfo.period || 'one_time',
+                external_id: donorInfo.external_id || ensureExternalId(),
+                first_name: donorInfo.first_name || '',
+                last_name: donorInfo.last_name || '',
+                email: donorInfo.email || '',
+                phone: donorInfo.phone || '',
+                page_url: donorInfo.page_url || '',
+                utm_source: donorInfo.utm_source || '',
+                utm_campaign: donorInfo.utm_campaign || '',
+                utm_medium: donorInfo.utm_medium || '',
+                utm_content: donorInfo.utm_content || '',
+                utm_term: donorInfo.utm_term || '',
+                fbclid: donorInfo.fbclid || '',
+                fbp: donorInfo.fbp || '',
+                fbc: donorInfo.fbc || '',
+            };
 
-        document.getElementById('btnCreate').addEventListener('click', async () => {
             try {
-                await createOrder();
-            } catch (e) {
-                log(e.message || 'erro');
+                const res = await fetch(PAYPAL_NOTIFY_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok || !json.ok) {
+                    log('donation-notify falhou', json);
+                    setStatus('notificação falhou');
+                    return false;
+                }
+                log('donation-notify ok', json);
+                setStatus('doação registrada');
+                setOrderInfo(json.order_id, json.external_id);
+                return true;
+            } catch (err) {
+                log('donation-notify erro fetch', err);
+                setStatus('erro de rede');
+                return false;
             }
+        }
+
+        function ensureExternalId(){
+            const stored = window.__PP_EXTID;
+            if (stored) return stored;
+            const id = 'don_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+            window.__PP_EXTID = id;
+            return id;
+        }
+
+        async function renderDonateButton() {
+            if (!donateContainer) return;
+            const data = readForm();
+            const amount = Number(data.amount || 0);
+            const key = `${data.currency}|${data.period}|${amount}|${data.external_id || ''}`;
+            if (donateRenderKey === key) return;
+            donateRenderKey = key;
+            donateContainer.innerHTML = '';
+            log('renderPayPalDonateButton', { amount, currency: data.currency });
+
+            try {
+                await loadDonateSdk();
+                if (!window.PayPal?.Donation) throw new Error('SDK não disponível');
+
+                const config = {
+                    env: 'sandbox',
+                    hosted_button_id: PAYPAL_HOSTED_BUTTON_ID,
+                    notify_url: PAYPAL_NOTIFY_ENDPOINT,
+                    image: {
+                        src: 'https://pics-v2.sandbox.paypal.com/00/s/NzAzMTM3ZTctMmQwNC00YTlhLWFkODgtNGNjYmU0YzAxYTgy/file.PNG',
+                        alt: 'Donate with PayPal button',
+                        title: 'PayPal - The safer, easier way to pay online!',
+                    },
+                    onComplete: async (params) => {
+                        log('PayPal donate onComplete', params);
+                        await notifyPayPalDonation(params, amount, {
+                            ...data,
+                            currency: data.currency,
+                            fbclid: data.fbclid,
+                            period: data.period,
+                        });
+                    },
+                    onError: (err) => {
+                        log('PayPal donate error', err);
+                        setStatus('erro no PayPal');
+                    },
+                };
+
+                if (amount > 0) {
+                    config.amount = {
+                        value: amount.toFixed(2),
+                        currency: data.currency,
+                    };
+                }
+
+                if (data.email) {
+                    config.payer = { email_address: data.email };
+                }
+
+                window.PayPal.Donation.Button(config).render('#paypalButtons');
+            } catch (err) {
+                log('Falha ao renderizar PayPal donate', err);
+                setStatus('botão indisponível');
+            }
+        }
+
+        ['amount', 'currency', 'period', 'email', 'external_id', 'first_name', 'last_name', 'phone', 'page_url', 'utm_source', 'utm_campaign', 'utm_medium', 'utm_content', 'utm_term', 'fbclid'].forEach((id) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.addEventListener('input', () => {
+                renderDonateButton();
+            });
+        });
+        ['btnCreate', 'btnCapture'].forEach((id) => {
+            const button = document.getElementById(id);
+            if (button) button.disabled = true;
         });
 
-        document.getElementById('btnCapture').addEventListener('click', async () => {
-            try {
-                if (!state.orderId) {
-                    await createOrder();
-                }
-                await captureOrder(state.orderId);
-            } catch (e) {
-                log(e.message || 'erro');
-            }
-        });
-
-        const clientId = "{{ config('services.paypal.client_id') }}";
-        const currency = document.getElementById('currency').value;
-
-        if (!clientId) {
-            const warning = document.createElement('div');
-            warning.className = 'alert';
-            warning.textContent = 'PAYPAL_CLIENT_ID ausente no .env.';
-            document.getElementById('paypalBox').appendChild(warning);
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture`;
-        script.onload = () => {
-            if (!window.paypal) return;
-            window.paypal.Buttons({
-                createOrder: async () => {
-                    const orderId = await createOrder();
-                    return orderId;
-                },
-                onApprove: async (data) => {
-                    log('onApprove', data);
-                    await captureOrder(data.orderID);
-                },
-                onError: (err) => {
-                    log('paypal error', { message: err && err.message ? err.message : String(err) });
-                    setStatus('erro no PayPal SDK');
-                }
-            }).render('#paypalButtons');
-        };
-        document.body.appendChild(script);
-
-        setOrder();
+        renderDonateButton();
+        setOrderInfo();
     })();
 </script>
 </body>

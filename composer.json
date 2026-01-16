@@ -9,6 +9,8 @@
         "php": "^8.2",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
+        "resend/resend-php": "^1.1",
+        "square/square": "^43.2",
         "stripe/stripe-php": "^19.1",
         "symfony/resend-mailer": "^7.4"
     },

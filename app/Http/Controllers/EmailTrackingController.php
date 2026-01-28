@@ -44,8 +44,6 @@ class EmailTrackingController extends Controller
             });
         }
 
-        $q->whereHas('events');
-
         // para mostrar eventos por linha (sem N+1 pesado)
         $messages = $q->with(['events' => function ($e) {
             $e->orderBy('id', 'desc')->limit(50);
@@ -58,16 +56,16 @@ class EmailTrackingController extends Controller
         $totaisFiltrados = (clone $q)->selectRaw('
             COUNT(*) as total,
             SUM(open_count) as opens,
-            SUM(click_count) as clicks
+            SUM(LEAST(click_count, 4)) as clicks
         ')->first();
 
         $opensAtLeastOne = (clone $q)->where('open_count', '>', 0)->count();
-        $clicksTotal = (int) (clone $q)->sum('click_count');
+        $clicksTotal = (int) (clone $q)->selectRaw('SUM(LEAST(click_count, 4)) as clicks')->value('clicks');
 
         $totaisGerais = EmailMessage::selectRaw('
             COUNT(*) as total,
             SUM(open_count) as opens,
-            SUM(click_count) as clicks
+            SUM(LEAST(click_count, 4)) as clicks
         ')->first();
 
         return view('email_tracking.index', [

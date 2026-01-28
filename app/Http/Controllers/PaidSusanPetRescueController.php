@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendDonationPaidEmail;
 use Illuminate\Http\Request;
 use App\Models\DadosSusanPetRescue;
-use App\Models\EmailMessage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use App\Traits\DonationReceiptMailerTrait;
 
 class PaidSusanPetRescueController extends Controller
 {
+    use DonationReceiptMailerTrait;
+
     public function paid(Request $request)
     {
         $data = $request->all();
@@ -77,7 +78,6 @@ class PaidSusanPetRescueController extends Controller
                 'message' => 'Webhook recebido (ainda não paid).',
             ], 200);
         }
-    
         // =========================
         // 3) Idempotência (evita reprocessar retries do GiveWP)
         // =========================
@@ -101,7 +101,6 @@ class PaidSusanPetRescueController extends Controller
                 'message' => 'duplicate webhook ignored',
             ], 200);
         }
-    
         // =========================
         // 4) Normalizador de nome p/ comparar "AnnKathrine" vs "Ann-Kathrine"
         // =========================
@@ -206,7 +205,6 @@ class PaidSusanPetRescueController extends Controller
                 'message' => 'paid recebido, mas registro não encontrado no BD (sem external_id).',
             ], 200);
         }
-    
         // =========================
         // 6) Atualiza BD (paid + amarra give_payment_id)
         // =========================
@@ -310,144 +308,124 @@ class PaidSusanPetRescueController extends Controller
         // =========================
         // 10) CAPI — Purchase (somente)
         // =========================
-        if ($payload['status'] === 'paid' && (float)$payload['amount'] >= 1) {
+        // if ($payload['status'] === 'paid' && (float)$payload['amount'] >= 1) {
     
-            $normalize = fn($str) => strtolower(trim((string) $str));
+        //     $normalize = fn($str) => strtolower(trim((string) $str));
     
-            $hashedEmail = $payload['email'] ? hash('sha256', $normalize($payload['email'])) : null;
+        //     $hashedEmail = $payload['email'] ? hash('sha256', $normalize($payload['email'])) : null;
     
-            $cleanPhone  = $payload['phone'] ? preg_replace('/\D+/', '', (string) $payload['phone']) : null;
-            $hashedPhone = $cleanPhone ? hash('sha256', $cleanPhone) : null;
+        //     $cleanPhone  = $payload['phone'] ? preg_replace('/\D+/', '', (string) $payload['phone']) : null;
+        //     $hashedPhone = $cleanPhone ? hash('sha256', $cleanPhone) : null;
     
-            // Facebook external_id (do Facebook) -> hash(email+phone), NÃO é o seu external_id
-            $externalBase = ($payload['email'] ? $normalize($payload['email']) : '') . ($cleanPhone ?: '');
-            $hashedExternalId = $externalBase ? hash('sha256', $externalBase) : null;
+        //     // Facebook external_id (do Facebook) -> hash(email+phone), NÃO é o seu external_id
+        //     $externalBase = ($payload['email'] ? $normalize($payload['email']) : '') . ($cleanPhone ?: '');
+        //     $hashedExternalId = $externalBase ? hash('sha256', $externalBase) : null;
     
-            $userData = array_filter([
-                'em'                => $hashedEmail ? [$hashedEmail] : null,
-                'ph'                => $hashedPhone ? [$hashedPhone] : null,
-                'fn'                => $payload['first_name'] ? hash('sha256', $normalize($payload['first_name'])) : null,
-                'ln'                => $payload['last_name']  ? hash('sha256', $normalize($payload['last_name']))  : null,
+        //     $userData = array_filter([
+        //         'em'                => $hashedEmail ? [$hashedEmail] : null,
+        //         'ph'                => $hashedPhone ? [$hashedPhone] : null,
+        //         'fn'                => $payload['first_name'] ? hash('sha256', $normalize($payload['first_name'])) : null,
+        //         'ln'                => $payload['last_name']  ? hash('sha256', $normalize($payload['last_name']))  : null,
     
-                'external_id'       => $hashedExternalId ?: null,
-                'client_ip_address' => $payload['ip'] ?? null,
-                'client_user_agent' => $payload['client_user_agent'] ?? null,
+        //         'external_id'       => $hashedExternalId ?: null,
+        //         'client_ip_address' => $payload['ip'] ?? null,
+        //         'client_user_agent' => $payload['client_user_agent'] ?? null,
     
-                'fbc'               => $payload['fbc'] ?? null,
-                'fbp'               => $payload['fbp'] ?? null,
-            ]);
+        //         'fbc'               => $payload['fbc'] ?? null,
+        //         'fbp'               => $payload['fbp'] ?? null,
+        //     ]);
     
-            $customData = [
-                'value'        => (float) $payload['amount'],
-                'currency'     => $payload['currency'],
-                'contents'     => [['id' => 'donation', 'quantity' => 1]],
-                'content_type' => 'product',
+        //     $customData = [
+        //         'value'        => (float) $payload['amount'],
+        //         'currency'     => $payload['currency'],
+        //         'contents'     => [['id' => 'donation', 'quantity' => 1]],
+        //         'content_type' => 'product',
     
-                'utm_source'   => $payload['utm_source'] ?? null,
-                'utm_campaign' => $payload['utm_campaign'] ?? null,
-                'utm_medium'   => $payload['utm_medium'] ?? null,
-                'utm_content'  => $payload['utm_content'] ?? null,
-                'utm_term'     => $payload['utm_term'] ?? null,
+        //         'utm_source'   => $payload['utm_source'] ?? null,
+        //         'utm_campaign' => $payload['utm_campaign'] ?? null,
+        //         'utm_medium'   => $payload['utm_medium'] ?? null,
+        //         'utm_content'  => $payload['utm_content'] ?? null,
+        //         'utm_term'     => $payload['utm_term'] ?? null,
     
-                'lead_id'      => $payload['fbclid'] ?? null,
-            ];
+        //         'lead_id'      => $payload['fbclid'] ?? null,
+        //     ];
     
-            // event_id determinístico (sem usar external_id)
-            $baseId = ($donationIdFromWebhook > 0 ? (string)$donationIdFromWebhook : '')
-                . '|' . (string)($payload['email'] ?? '')
-                . '|' . (string)($payload['event_time'] ?? time())
-                . '|' . (string)($payload['amount_cents'] ?? '');
+        //     // event_id determinístico (sem usar external_id)
+        //     $baseId = ($donationIdFromWebhook > 0 ? (string)$donationIdFromWebhook : '')
+        //         . '|' . (string)($payload['email'] ?? '')
+        //         . '|' . (string)($payload['event_time'] ?? time())
+        //         . '|' . (string)($payload['amount_cents'] ?? '');
     
-            $eventIdFor = fn(string $eventName) => substr(hash('sha256', $baseId . '|' . $eventName), 0, 32);
+        //     $eventIdFor = fn(string $eventName) => substr(hash('sha256', $baseId . '|' . $eventName), 0, 32);
     
-            $dataEvents = [[
-                'event_name'       => 'Purchase',
-                'event_time'       => $payload['event_time'] ?? time(),
-                'action_source'    => 'website',
-                'event_id'         => $eventIdFor('Purchase'),
-                'event_source_url' => $payload['page_url'],
-                'user_data'        => $userData,
-                'custom_data'      => $customData,
-            ]];
-    
-            // $targets = [
-            //     'b1s' => 'facebook_capi_susan_pet_rescue_b1s',
-            //     'b2s' => 'facebook_capi_susan_pet_rescue_b2s',
-            // ];
+        //     $dataEvents = [[
+        //         'event_name'       => 'Purchase',
+        //         'event_time'       => $payload['event_time'] ?? time(),
+        //         'action_source'    => 'website',
+        //         'event_id'         => $eventIdFor('Purchase'),
+        //         'event_source_url' => $payload['page_url'],
+        //         'user_data'        => $userData,
+        //         'custom_data'      => $customData,
+        //     ]];
             
-            // ✅ Decide o(s) pixel(s) pelo utm_campaign
-            $targets = [];
+        //     $targets = [];
             
-            $camp = (string) ($payload['utm_campaign'] ?? '');
+        //     $camp = (string) ($payload['utm_campaign'] ?? '');
     
-            if (stripos($camp, 'B1S') !== false) {
-                $targets = ['b1s' => 'facebook_capi_susan_pet_rescue_b1s'];
-            } elseif (stripos($camp, 'B2S') !== false) {
-                $targets = ['b2s' => 'facebook_capi_susan_pet_rescue_b2s'];
-            } else {
-                // fallback (se vier sem B1S/B2S): escolha 1 padrão OU mande pros 2
-                // recomendo mandar pros 2 só se você realmente quiser “backup”
-                $targets = [
-                    'b1s' => 'facebook_capi_susan_pet_rescue_b1s',
-                    'b2s' => 'facebook_capi_susan_pet_rescue_b2s',
-                ];
+        //     if (stripos($camp, 'B1S') !== false) {
+        //         $targets = ['b1s' => 'facebook_capi_susan_pet_rescue_b1s'];
+        //     } elseif (stripos($camp, 'B2S') !== false) {
+        //         $targets = ['b2s' => 'facebook_capi_susan_pet_rescue_b2s'];
+        //     } else {
+        //         // fallback (se vier sem B1S/B2S): escolha 1 padrão OU mande pros 2
+        //         // recomendo mandar pros 2 só se você realmente quiser “backup”
+        //         $targets = [
+        //             'b1s' => 'facebook_capi_susan_pet_rescue_b1s',
+        //             'b2s' => 'facebook_capi_susan_pet_rescue_b2s',
+        //         ];
             
-                Log::warning('utm_campaign sem B1S/B2S — fallback targets=both', [
-                    'utm_campaign' => $payload['utm_campaign'] ?? null,
-                    'donation_id'  => $donationIdFromWebhook ?: null,
-                    'email'        => $payload['email'] ?? null,
-                ]);
-                
-                // ✅ sem B1S/B2S => NÃO envia pra nenhum pixel
-                // Log::warning('utm_campaign sem B1S/B2S — CAPI não enviado', [
-                //     'utm_campaign' => $utmCampaign ?: null,
-                //     'donation_id'  => $donationId ?: null,
-                //     'email'        => $email ?: null,
-                //     'amount_cents' => $amountCents ?: null,
-                // ]);
-            
-                // return response()->json([
-                //     'ok' => true,
-                //     'message' => 'paid recebido, mas sem B1S/B2S em utm_campaign — CAPI não enviado',
-                // ], 200);
-            }
+        //         Log::warning('utm_campaign sem B1S/B2S — fallback targets=both', [
+        //             'utm_campaign' => $payload['utm_campaign'] ?? null,
+        //             'donation_id'  => $donationIdFromWebhook ?: null,
+        //             'email'        => $payload['email'] ?? null,
+        //         ]);
+        //     }
     
-            foreach ($targets as $label => $serviceKey) {
-                $pixelId  = config("services.{$serviceKey}.pixel_id");
-                $apiToken = config("services.{$serviceKey}.access_token");
+        //     // foreach ($targets as $label => $serviceKey) {
+        //     //     $pixelId  = config("services.{$serviceKey}.pixel_id");
+        //     //     $apiToken = config("services.{$serviceKey}.access_token");
     
-                if (!$pixelId || !$apiToken) {
-                    Log::warning("CAPI creds missing ({$label})", [
-                        'service'  => $serviceKey,
-                        'pixelId'  => $pixelId,
-                        'hasToken' => !empty($apiToken),
-                    ]);
-                    continue;
-                }
+        //     //     if (!$pixelId || !$apiToken) {
+        //     //         Log::warning("CAPI creds missing ({$label})", [
+        //     //             'service'  => $serviceKey,
+        //     //             'pixelId'  => $pixelId,
+        //     //             'hasToken' => !empty($apiToken),
+        //     //         ]);
+        //     //         continue;
+        //     //     }
     
-                $capiPayload = [
-                    'data' => $dataEvents,
-                    'access_token' => $apiToken,
-                ];
+        //     //     $capiPayload = [
+        //     //         'data' => $dataEvents,
+        //     //         'access_token' => $apiToken,
+        //     //     ];
     
-                Log::info("CAPI Payload (GiveWP paid) - {$label}", [
-                    'service'  => $serviceKey,
-                    'pixel_id' => $pixelId,
-                    'payload'  => $capiPayload,
-                ]);
+        //     //     Log::info("CAPI Payload (GiveWP paid) - {$label}", [
+        //     //         'service'  => $serviceKey,
+        //     //         'pixel_id' => $pixelId,
+        //     //         'payload'  => $capiPayload,
+        //     //     ]);
     
-                $res = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+        //     //     $res = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+        //     //         ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
     
-                Log::info("Facebook CAPI response (GiveWP paid) - {$label}", [
-                    'service'  => $serviceKey,
-                    'pixel_id' => $pixelId,
-                    'status'   => $res->status(),
-                    'body'     => $res->body(),
-                ]);
-            }
-        }
-    
+        //     //     Log::info("Facebook CAPI response (GiveWP paid) - {$label}", [
+        //     //         'service'  => $serviceKey,
+        //     //         'pixel_id' => $pixelId,
+        //     //         'status'   => $res->status(),
+        //     //         'body'     => $res->body(),
+        //     //     ]);
+        //     // }
+        // }
         // =========================
         // 11) UTMIFY — paid (geo do BD)
         // =========================
@@ -464,78 +442,78 @@ class PaidSusanPetRescueController extends Controller
         ) $utmPaymentMethod = 'credit_card';
         elseif (str_contains($methodLower, 'paypal')) $utmPaymentMethod = 'paypal';
     
-        if ($payload['status'] === 'paid') {
+        // if ($payload['status'] === 'paid') {
     
-            $utmPayload = [
-                'orderId' => 'ord_' . substr(bin2hex(random_bytes(4)), 0, 8),
-                'platform' => 'Checkout',
-                'paymentMethod' => $utmPaymentMethod,
-                'status' => 'paid',
-                'createdAt' => $payload['event_time'] ? date('c', (int)$payload['event_time']) : now()->toIso8601String(),
-                'approvedDate' => $payload['confirmed_at'],
-                'refundedAt' => null,
+        //     $utmPayload = [
+        //         'orderId' => 'ord_' . substr(bin2hex(random_bytes(4)), 0, 8),
+        //         'platform' => 'Checkout',
+        //         'paymentMethod' => $utmPaymentMethod,
+        //         'status' => 'paid',
+        //         'createdAt' => $payload['event_time'] ? date('c', (int)$payload['event_time']) : now()->toIso8601String(),
+        //         'approvedDate' => $payload['confirmed_at'],
+        //         'refundedAt' => null,
     
-                'customer' => [
-                    'name'     => $payload['payer_name'] ?? '',
-                    'email'    => $payload['email'] ?? '',
-                    'phone'    => $payload['phone'] ?? '',
-                    'document' => $payload['payer_document'] ?? '',
-                    'country'  => $country,
-                    'ip'       => $payload['ip'] ?? ''
-                ],
+        //         'customer' => [
+        //             'name'     => $payload['payer_name'] ?? '',
+        //             'email'    => $payload['email'] ?? '',
+        //             'phone'    => $payload['phone'] ?? '',
+        //             'document' => $payload['payer_document'] ?? '',
+        //             'country'  => $country,
+        //             'ip'       => $payload['ip'] ?? ''
+        //         ],
     
-                'products' => [[
-                    'id' => 'SPR',
-                    'name' => $payload['product_label'],
-                    'planId' => $payload['amount_formatted'],
-                    'planName' => $payload['product_label'],
-                    'quantity' => 1,
-                    'priceInCents' => $payload['amount_cents'],
-                ]],
+        //         'products' => [[
+        //             'id' => 'SPR',
+        //             'name' => $payload['product_label'],
+        //             'planId' => $payload['amount_formatted'],
+        //             'planName' => $payload['product_label'],
+        //             'quantity' => 1,
+        //             'priceInCents' => $payload['amount_cents'],
+        //         ]],
     
-                'trackingParameters' => [
-                    'src'          => $payload['utm_source'] ?? '',
-                    'utm_source'   => $payload['utm_source'] ?? '',
-                    'utm_campaign' => $payload['utm_campaign'] ?? '',
-                    'utm_medium'   => $payload['utm_medium'] ?? '',
-                    'utm_content'  => $payload['utm_content'] ?? '',
-                    'utm_term'     => $payload['utm_term'] ?? '',
-                    'country'      => $country,
-                    'region'       => $region,
-                    'city'         => $city
-                ],
+        //         'trackingParameters' => [
+        //             'src'          => $payload['utm_source'] ?? '',
+        //             'utm_source'   => $payload['utm_source'] ?? '',
+        //             'utm_campaign' => $payload['utm_campaign'] ?? '',
+        //             'utm_medium'   => $payload['utm_medium'] ?? '',
+        //             'utm_content'  => $payload['utm_content'] ?? '',
+        //             'utm_term'     => $payload['utm_term'] ?? '',
+        //             'country'      => $country,
+        //             'region'       => $region,
+        //             'city'         => $city
+        //         ],
     
-                'commission' => [
-                    'totalPriceInCents'     => $payload['amount_cents'],
-                    'gatewayFeeInCents'     => 0,
-                    'userCommissionInCents' => $payload['amount_cents'],
-                    'currency'              => $payload['currency'],
-                ],
+        //         'commission' => [
+        //             'totalPriceInCents'     => $payload['amount_cents'],
+        //             'gatewayFeeInCents'     => 0,
+        //             'userCommissionInCents' => $payload['amount_cents'],
+        //             'currency'              => $payload['currency'],
+        //         ],
     
-                'isTest' => false
-            ];
+        //         'isTest' => false
+        //     ];
     
-            $utmUrl = config('services.utmify_susan_pet_rescue.url');
-            $utmKey = config('services.utmify_susan_pet_rescue.api_key');
+        //     $utmUrl = config('services.utmify_susan_pet_rescue.url');
+        //     $utmKey = config('services.utmify_susan_pet_rescue.api_key');
     
-            if ($utmUrl && $utmKey) {
-                $res = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                    'x-api-token'  => $utmKey,
-                ])->post($utmUrl, $utmPayload);
+        //     // if ($utmUrl && $utmKey) {
+        //     //     $res = \Illuminate\Support\Facades\Http::withHeaders([
+        //     //         'Content-Type' => 'application/json',
+        //     //         'x-api-token'  => $utmKey,
+        //     //     ])->post($utmUrl, $utmPayload);
     
-                Log::info('Utmify Payload (GiveWP paid) enviado:', $utmPayload);
-                Log::info("Utmify response (GiveWP paid)", [
-                    'status' => $res->status(),
-                    'body'   => $res->body(),
-                ]);
-            } else {
-                Log::warning('UTMFY_URL ou UTMFY_API_KEY não configurados', [
-                    'utmUrl' => $utmUrl,
-                    'utmKey' => !empty($utmKey),
-                ]);
-            }
-        }
+        //     //     Log::info('Utmify Payload (GiveWP paid) enviado:', $utmPayload);
+        //     //     Log::info("Utmify response (GiveWP paid)", [
+        //     //         'status' => $res->status(),
+        //     //         'body'   => $res->body(),
+        //     //     ]);
+        //     // } else {
+        //     //     Log::warning('UTMFY_URL ou UTMFY_API_KEY não configurados', [
+        //     //         'utmUrl' => $utmUrl,
+        //     //         'utmKey' => !empty($utmKey),
+        //     //     ]);
+        //     // }
+        // }
     
         return response()->json([
             'ok' => true,
@@ -569,6 +547,14 @@ class PaidSusanPetRescueController extends Controller
         if ($amountCents <= 0 && $amount > 0) $amountCents = (int) round($amount * 100);
     
         $isRecurring      = (bool) data_get($data, 'donation.recurring', false);
+        $donationTypeNormalized = trim(strtolower((string) $donationType));
+        if ($isRecurring) {
+            $methodForDado = 'paypal recurring';
+        } elseif ($donationTypeNormalized === '' || str_contains($donationTypeNormalized, 'paypal')) {
+            $methodForDado = 'paypal';
+        } else {
+            $methodForDado = $donationTypeNormalized;
+        }
     
         $firstName        = (string) data_get($data, 'donation.first_name', data_get($data, 'donation.donor.first_name', ''));
         $lastName         = (string) data_get($data, 'donation.last_name',  data_get($data, 'donation.donor.last_name', ''));
@@ -677,7 +663,6 @@ class PaidSusanPetRescueController extends Controller
                 'message' => 'Donor recebido (não-paid ou valor inválido).',
             ], 200);
         }
-        
         // ==========================================================
         // ✅ [NOVO] (2) IDEMPOTÊNCIA / DEDUPE DO WEBHOOK "paid"
         // - se o webhook repetir, NÃO reprocessa (BD/CAPI/UTMify)
@@ -706,7 +691,6 @@ class PaidSusanPetRescueController extends Controller
                 'message' => 'duplicate webhook ignored',
             ], 200);
         }
-        
         // ==========================================================
         // ✅ [NOVO] normalizador de nome p/ comparar "AnnKathrine" vs "Ann-Kathrine"
         // ==========================================================
@@ -776,18 +760,7 @@ class PaidSusanPetRescueController extends Controller
                 // método do donor (opcional)
                 // if (!empty($donationType))    $dado->method = (string) $donationType;
                 
-                if (!empty($donationType)) {
-                    $dt = strtolower(trim((string) $donationType));
-                
-                    if (str_contains($dt, 'paypal')) {
-                        // paypal_express / paypal / paypal_*  => salva "paypal"
-                        // se for recorrente => salva "paypal recurring" (mesma lógica do seu padrão)
-                        $dado->method = $isRecurring ? 'paypal recurring' : 'paypal';
-                    } else {
-                        // mantém o tipo original quando não é paypal
-                        $dado->method = (string) $donationType;
-                    }
-                }
+                $dado->method = $methodForDado;
                 
                 $dbCountry = strtoupper(trim((string) ($dado->_country ?? '')));
                 if ($dbCountry !== '' && $dbCountry !== 'XX') {
@@ -801,7 +774,39 @@ class PaidSusanPetRescueController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
-    
+        if (!$dado) {
+            try {
+                $dado = DadosSusanPetRescue::create([
+                    'external_id'       => $donationId ?: null,
+                    'status'            => 'paid',
+                    'currency'          => $currency,
+                    'amount'            => $amount > 0 ? $amount : null,
+                    'amount_cents'      => $amountCents > 0 ? $amountCents : null,
+                    'first_name'        => $firstName ?: null,
+                    'last_name'         => $lastName ?: null,
+                    'email'             => $email ?: null,
+                    'phone'             => $phone ?: null,
+                    'ip'                => $request->ip(),
+                    'method'            => $methodForDado,
+                    'event_time'        => $eventTime,
+                    'page_url'          => 'https://susanpetrescue.org/',
+                    'client_user_agent' => $request->userAgent(),
+                    'utm_source'        => $utmSource ?: null,
+                    'utm_campaign'      => $utmCampaign ?: null,
+                    'utm_medium'        => $utmMedium ?: null,
+                    'utm_content'       => $utmContent ?: null,
+                    'utm_term'          => $utmTerm ?: null,
+                ]);
+                Log::info('Donor recorrente: registro criado no BD', [
+                    'id' => $dado->id,
+                    'external_id' => $dado->external_id,
+                ]);
+            } catch (\Throwable $createEx) {
+                Log::warning('Falha ao criar registro Donor recorrente', [
+                    'error' => $createEx->getMessage(),
+                ]);
+            }
+        }
         // =========================
         // 5) ✅ UTMIFY paymentMethod (SEM FUNÇÕES PAYPAL)
         //    utmify aceita: 'credit_card' | 'boleto' | 'pix' | 'paypal' | 'free_price'
@@ -835,7 +840,6 @@ class PaidSusanPetRescueController extends Controller
         } else {
             $utmPaymentMethod = 'credit_card';
         }
-    
         // =========================
         // 6) FACEBOOK CAPI — Purchase (somente)
         // =========================
@@ -895,81 +899,70 @@ class PaidSusanPetRescueController extends Controller
             'user_data'        => $userData,
             'custom_data'      => $customData,
         ]];
-        
-        // ✅ Decide o(s) pixel(s) pelo utm_campaign
-        $targets = [];
-        
-        $camp = strtoupper(trim((string) $utmCampaign));
 
-        if (preg_match('/\bB1S\b/i', $camp)) {
-            $targets = ['b1s' => 'facebook_capi_susan_pet_rescue_b1s'];
-        } elseif (preg_match('/\bB2S\b/i', $camp)) {
-            $targets = ['b2s' => 'facebook_capi_susan_pet_rescue_b2s'];
-        } else {
-            // fallback (se vier sem B1S/B2S): escolha 1 padrão OU mande pros 2
-            // recomendo mandar pros 2 só se você realmente quiser “backup”
-            $targets = ['b1s' => 'facebook_capi_susan_pet_rescue_b1s', 'b2s' => 'facebook_capi_susan_pet_rescue_b2s'];
-        
-            Log::warning('utm_campaign sem B1S/B2S — fallback targets=both', [
-                'utm_campaign' => $utmCampaign ?: null,
-                'donation_id'  => $donationId ?: null,
-                'email'        => $email ?: null,
-            ]);
+        $pageUrlForFacebook = strtolower((string) ($dado->page_url ?? $payload['page_url'] ?? ''));
+        $shouldSendFacebook = $pageUrlForFacebook !== '' && str_contains($pageUrlForFacebook, 'susanpetrescue.org');
+
+        if ($shouldSendFacebook) {
+            $targets = [];
             
-            // ✅ sem B1S/B2S => NÃO envia pra nenhum pixel
-            // Log::warning('utm_campaign sem B1S/B2S — CAPI não enviado', [
-            //     'utm_campaign' => $utmCampaign ?: null,
-            //     'donation_id'  => $donationId ?: null,
-            //     'email'        => $email ?: null,
-            //     'amount_cents' => $amountCents ?: null,
-            // ]);
-        
-            // return response()->json([
-            //     'ok' => true,
-            //     'message' => 'paid recebido, mas sem B1S/B2S em utm_campaign — CAPI não enviado',
-            // ], 200);
-        }
-    
-        // $targets = [
-        //     'b1s' => 'facebook_capi_susan_pet_rescue_b1s',
-        //     'b2s' => 'facebook_capi_susan_pet_rescue_b2s',
-        // ];
-    
-        foreach ($targets as $label => $serviceKey) {
-            $pixelId  = config("services.{$serviceKey}.pixel_id");
-            $apiToken = config("services.{$serviceKey}.access_token");
-    
-            if (!$pixelId || !$apiToken) {
-                Log::warning("CAPI creds missing ({$label})", [
-                    'service'  => $serviceKey,
-                    'pixelId'  => $pixelId,
-                    'hasToken' => !empty($apiToken),
+            $camp = strtoupper(trim((string) $utmCampaign));
+
+            if (preg_match('/\bB1S\b/i', $camp)) {
+                $targets = ['b1s' => 'facebook_capi_susan_pet_rescue_b1s'];
+            } elseif (preg_match('/\bB2S\b/i', $camp)) {
+                $targets = ['b2s' => 'facebook_capi_susan_pet_rescue_b2s'];
+            } else {
+                $targets = ['b1s' => 'facebook_capi_susan_pet_rescue_b1s', 'b2s' => 'facebook_capi_susan_pet_rescue_b2s'];
+
+                Log::warning('utm_campaign sem B1S/B2S � fallback targets=both', [
+                    'utm_campaign' => $utmCampaign ?: null,
+                    'donation_id'  => $donationId ?: null,
+                    'email'        => $email ?: null,
                 ]);
-                continue;
             }
-    
-            $capiPayload = [
-                'data' => $dataEvents,
-                'access_token' => $apiToken,
-            ];
-    
-            Log::info("CAPI Payload (Donor paid) - {$label}", [
-                'service'  => $serviceKey,
-                'pixel_id' => $pixelId,
-                'payload'  => $capiPayload,
-            ]);
-    
-            $res = Http::withHeaders(['Content-Type' => 'application/json'])
-                ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
-    
-            Log::info("Facebook CAPI response (Donor paid) - {$label}", [
-                'service'  => $serviceKey,
-                'pixel_id' => $pixelId,
-                'status'   => $res->status(),
-                'body'     => $res->body(),
+
+            foreach ($targets as $label => $serviceKey) {
+                $pixelId  = config("services.{$serviceKey}.pixel_id");
+                $apiToken = config("services.{$serviceKey}.access_token");
+
+                if (!$pixelId || !$apiToken) {
+                    Log::warning("CAPI creds missing ({$label})", [
+                        'service'  => $serviceKey,
+                        'pixelId'  => $pixelId,
+                        'hasToken' => !empty($apiToken),
+                    ]);
+                    continue;
+                }
+
+                $capiPayload = [
+                    'data' => $dataEvents,
+                    'access_token' => $apiToken,
+                ];
+
+                Log::info("CAPI Payload (Donor paid) - {$label}", [
+                    'service'  => $serviceKey,
+                    'pixel_id' => $pixelId,
+                    'payload'  => $capiPayload,
+                ]);
+
+                $res = Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+
+                Log::info("Facebook CAPI response (Donor paid) - {$label}", [
+                    'service'  => $serviceKey,
+                    'pixel_id' => $pixelId,
+                    'status'   => $res->status(),
+                    'body'     => $res->body(),
+                ]);
+            }
+        } else {
+            Log::info('Donor paid skipping Facebook CAPI (page_url outside susanpetrescue.org)', [
+                'page_url' => $payload['page_url'] ?? null,
+                'donation_id' => $donationId ?: null,
+                'external_id' => $payload['external_id'] ?? null,
             ]);
         }
-    
         // =========================
         // 7) UTMIFY — paid
         // =========================
@@ -1043,6 +1036,26 @@ class PaidSusanPetRescueController extends Controller
             ]);
         }
     
+        $methodLabel = $donationType ?: ($isRecurring ? 'donor recurring' : 'donor');
+        if ($amount >= 200) {
+            $this->queueDonationPaidEmail(
+                $payload,
+                $isRecurring,
+                $donationId,
+                $moneySymbol,
+                $amountFormatted,
+                $eventTime,
+                $methodLabel,
+                'Donor webhook'
+            );
+        } else {
+            Log::info('Donor paid below receipt threshold, skipping email', [
+                'donation_id' => $donationId ?: null,
+                'amount' => $amount,
+                'email' => $payload['email'] ?? null,
+            ]);
+        }
+
         return response()->json([
             'ok' => true,
             'message' => 'Donor paid processado com sucesso (sem BD)',
@@ -1053,3 +1066,8 @@ class PaidSusanPetRescueController extends Controller
         ], 200);
     }
 }
+
+
+
+
+

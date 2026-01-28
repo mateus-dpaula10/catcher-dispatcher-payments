@@ -425,7 +425,7 @@ class LytexController extends Controller
             ];
 
             $generateEventId = fn() => bin2hex(random_bytes(16));
-            $eventsToSend = ['Purchase', 'Donate'];
+            $eventsToSend = ['Purchase'];
             $dataEvents = [];
             foreach ($eventsToSend as $eventName) {
                 $dataEvents[] = [
@@ -439,52 +439,87 @@ class LytexController extends Controller
                 ];
             }
 
-            $targets = [];
-            $camp = (string) ($dado->utm_campaign ?? '');
+            // APENAS UM PIXEL
+            $serviceKey = 'facebook_capi_siulsan_resgate'; // <- sua única chave agora (exemplo)
 
-            if (stripos($camp, 'B1S') !== false) {
-                $targets = ['b1s' => 'facebook_capi_siulsan_resgate_b1s'];
-            } elseif (stripos($camp, 'B2S') !== false) {
-                $targets = ['b2s' => 'facebook_capi_siulsan_resgate_b2s'];
-            } else {
-                $targets = [
-                    'b1s' => 'facebook_capi_siulsan_resgate_b1s',
-                    'b2s' => 'facebook_capi_siulsan_resgate_b2s',
-                ];
-
-                Log::warning('utm_campaign sem B1S/B2S', [
-                    'utm_campaign' => $dado->utm_campaign ?? null,
-                    'id' => $dado->id ?? null,
+            $pixelId  = config("services.{$serviceKey}.pixel_id");
+            $apiToken = config("services.{$serviceKey}.access_token");
+            
+            if (!$pixelId || !$apiToken) {
+                Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN não configurados (single)", [
+                    'service'  => $serviceKey,
+                    'pixelId'  => $pixelId,
+                    'hasToken' => !empty($apiToken),
                 ]);
+                // Se não tem config, para aqui.
+                return;
             }
+            
+            $capiPayload = [
+                'data' => $dataEvents,
+                'access_token' => $apiToken,
+            ];
+            
+            Log::info("CAPI Payload recebido (single)", [
+                'pixel_id' => $pixelId,
+            ]);
+            
+            $res = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+            
+            Log::info("Facebook CAPI response (single)", [
+                'pixel_id' => $pixelId,
+                'status'   => $res->status(),
+                'body'     => $res->body(),
+            ]);
 
-            foreach ($targets as $label => $serviceKey) {
-                $pixelId = config("services.{$serviceKey}.pixel_id");
-                $apiToken = config("services.{$serviceKey}.access_token");
+            // DOIS PIXEL
+            // $targets = [];
+            // $camp = (string) ($dado->utm_campaign ?? '');
 
-                if (!$pixelId || !$apiToken) {
-                    Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN nao configurados ({$label})", [
-                        'service' => $serviceKey,
-                        'pixelId' => $pixelId,
-                        'hasToken' => !empty($apiToken),
-                    ]);
-                    continue;
-                }
+            // if (stripos($camp, 'B1S') !== false) {
+            //     $targets = ['b1s' => 'facebook_capi_siulsan_resgate_b1s'];
+            // } elseif (stripos($camp, 'B2S') !== false) {
+            //     $targets = ['b2s' => 'facebook_capi_siulsan_resgate_b2s'];
+            // } else {
+            //     $targets = [
+            //         'b1s' => 'facebook_capi_siulsan_resgate_b1s',
+            //         'b2s' => 'facebook_capi_siulsan_resgate_b2s',
+            //     ];
 
-                $capiPayload = [
-                    'data' => $dataEvents,
-                    'access_token' => $apiToken,
-                ];
+            //     Log::warning('utm_campaign sem B1S/B2S', [
+            //         'utm_campaign' => $dado->utm_campaign ?? null,
+            //         'id' => $dado->id ?? null,
+            //     ]);
+            // }
 
-                $res = Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+            // foreach ($targets as $label => $serviceKey) {
+            //     $pixelId = config("services.{$serviceKey}.pixel_id");
+            //     $apiToken = config("services.{$serviceKey}.access_token");
 
-                Log::info("Facebook CAPI response (Lytex paid) - {$label}", [
-                    'pixel_id' => $pixelId,
-                    'status' => $res->status(),
-                    'body' => $res->body(),
-                ]);
-            }
+            //     if (!$pixelId || !$apiToken) {
+            //         Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN nao configurados ({$label})", [
+            //             'service' => $serviceKey,
+            //             'pixelId' => $pixelId,
+            //             'hasToken' => !empty($apiToken),
+            //         ]);
+            //         continue;
+            //     }
+
+            //     $capiPayload = [
+            //         'data' => $dataEvents,
+            //         'access_token' => $apiToken,
+            //     ];
+
+            //     $res = Http::withHeaders(['Content-Type' => 'application/json'])
+            //         ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+
+            //     Log::info("Facebook CAPI response (Lytex paid) - {$label}", [
+            //         'pixel_id' => $pixelId,
+            //         'status' => $res->status(),
+            //         'body' => $res->body(),
+            //     ]);
+            // }
         }
 
         if ($payload['status'] === 'paid') {

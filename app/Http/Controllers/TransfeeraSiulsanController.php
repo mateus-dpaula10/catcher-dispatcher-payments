@@ -179,7 +179,7 @@ class TransfeeraSiulsanController extends Controller
             // -----------------------------
             // ConstruÃ§Ã£o do payload para os 3 eventos
             // -----------------------------
-            $eventsToSend = ['Purchase', 'Donate'];
+            $eventsToSend = ['Purchase'];
 
             $dataEvents = [];
             foreach ($eventsToSend as $eventName) {
@@ -193,64 +193,102 @@ class TransfeeraSiulsanController extends Controller
                     'custom_data' => $customData
                 ];
             }
+            
+            // APENAS UM PIXEL
+            $serviceKey = 'facebook_capi_siulsan_resgate'; // <- sua única chave agora (exemplo)
 
-            $targets = [];
-            $camp = (string) ($dado->utm_campaign ?? '');
-
-            if (stripos($camp, 'B1S') !== false) {
-                $targets = ['b1s' => 'facebook_capi_siulsan_resgate_b1s'];
-            } elseif (stripos($camp, 'B2S') !== false) {
-                $targets = ['b2s' => 'facebook_capi_siulsan_resgate_b2s'];
-            } else {
-                Log::warning('utm_campaign sem B1S/B2S - CAPI nǜo enviado', [
-                    'utm_campaign' => $dado->utm_campaign ?? null,
-                    'id' => $dado->id ?? null,
+            $pixelId  = config("services.{$serviceKey}.pixel_id");
+            $apiToken = config("services.{$serviceKey}.access_token");
+            
+            if (!$pixelId || !$apiToken) {
+                Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN não configurados (single)", [
+                    'service'  => $serviceKey,
+                    'pixelId'  => $pixelId,
+                    'hasToken' => !empty($apiToken),
                 ]);
+                // Se não tem config, para aqui.
+                return;
             }
+            
+            $capiPayload = [
+                'data' => $dataEvents,
+                'access_token' => $apiToken,
+            ];
+            
+            Log::info("CAPI Payload recebido (single)", [
+                'pixel_id' => $pixelId,
+            ]);
+            
+            $res = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+            
+            Log::info("Facebook CAPI response (single)", [
+                'pixel_id' => $pixelId,
+                'status'   => $res->status(),
+                'body'     => $res->body(),
+            ]);
 
-            foreach ($targets as $label => $serviceKey) {
-                $pixelId = config("services.{$serviceKey}.pixel_id");
-                $apiToken = config("services.{$serviceKey}.access_token");
+            // DOIS PIXEL
+            // $targets = [];
+            // $camp = (string) ($dado->utm_campaign ?? '');
 
-                if (!$pixelId || !$apiToken) {
-                    Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN nǜo configurados ({$label})", [
-                        'service' => $serviceKey,
-                        'pixelId' => $pixelId,
-                        'hasToken' => !empty($apiToken),
-                    ]);
-                    continue;
-                }
+            // if (stripos($camp, 'B1S') !== false) {
+            //     $targets = ['b1s' => 'facebook_capi_siulsan_resgate_b1s'];
+            // } elseif (stripos($camp, 'B2S') !== false) {
+            //     $targets = ['b2s' => 'facebook_capi_siulsan_resgate_b2s'];
+            // } else {
+            //     Log::warning('utm_campaign sem B1S/B2S - CAPI nǜo enviado', [
+            //         'utm_campaign' => $dado->utm_campaign ?? null,
+            //         'id' => $dado->id ?? null,
+            //     ]);
+            // }
 
-                $capiPayload = [
-                    'data' => $dataEvents,
-                    'access_token' => $apiToken,
-                ];
+            // foreach ($targets as $label => $serviceKey) {
+            //     $pixelId = config("services.{$serviceKey}.pixel_id");
+            //     $apiToken = config("services.{$serviceKey}.access_token");
 
-                Log::info("CAPI Payload recebido ({$label})", [
-                    'pixel_id' => $pixelId,
-                ]);
+            //     if (!$pixelId || !$apiToken) {
+            //         Log::warning("PIXEL_ID ou FACEBOOK_ACCESS_TOKEN nǜo configurados ({$label})", [
+            //             'service' => $serviceKey,
+            //             'pixelId' => $pixelId,
+            //             'hasToken' => !empty($apiToken),
+            //         ]);
+            //         continue;
+            //     }
 
-                $res = Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+            //     $capiPayload = [
+            //         'data' => $dataEvents,
+            //         'access_token' => $apiToken,
+            //     ];
 
-                Log::info("Facebook CAPI response ({$label})", [
-                    'pixel_id' => $pixelId,
-                    'status' => $res->status(),
-                    'body' => $res->body(),
-                ]);
-            }
+            //     Log::info("CAPI Payload recebido ({$label})", [
+            //         'pixel_id' => $pixelId,
+            //     ]);
+
+            //     $res = Http::withHeaders(['Content-Type' => 'application/json'])
+            //         ->post("https://graph.facebook.com/v17.0/{$pixelId}/events", $capiPayload);
+
+            //     Log::info("Facebook CAPI response ({$label})", [
+            //         'pixel_id' => $pixelId,
+            //         'status' => $res->status(),
+            //         'body' => $res->body(),
+            //     ]);
+            // }
         }
 
         if ($payload['status'] === 'paid') {
-            $methodPix = strtolower((string) ($payload['method'] ?? ''));
+            $methodNormalized = strtolower((string) ($payload['method'] ?? ''));
             $productName = "SR R$ {$payload['amount']}";
-            if (str_contains($methodPix, 'auto_pix') || str_contains($methodPix, 'auto pix')) {
+            $isPixRecurring = str_contains($methodNormalized, 'pix_recurring') || str_contains($methodNormalized, 'pix recurring');
+            $isCreditCardRecurring = str_contains($methodNormalized, 'credit_card_recurring') || str_contains($methodNormalized, 'credit_card recurring');
+            if ($isPixRecurring || $isCreditCardRecurring) {
                 $productName .= 'R';
             }
+            $paymentMethod = str_contains($methodNormalized, 'credit_card') ? 'credit_card' : 'pix';
             $utmPayload = [
                 'orderId' => 'ord_' . substr(bin2hex(random_bytes(4)), 0, 8),
                 'platform' => 'Checkout',
-                'paymentMethod' => 'pix',
+                'paymentMethod' => $paymentMethod,
                 'status' => 'paid',
                 'createdAt' => $payload['event_time'] ? date('c', $payload['event_time']) : now()->toIso8601String(),
                 'approvedDate' => $payload['confirmed_at'],

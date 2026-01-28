@@ -6,7 +6,7 @@
     <div class="container-fluid" id="email_tracking_index">
         <div class="row">
             <div class="col-12 px-0">
-                <div class="card" style="min-height: 100vh">
+                <div class="card" style="min-height: 100vh; padding-bottom: 50px">
                     <div class="card-body px-0">
                         @php
                             $useRange = request()->boolean('periodo');

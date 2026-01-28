@@ -9,6 +9,7 @@ class Dados extends Model
     protected $table = "dados";
 
     protected $fillable = [
+        'custom_id',
         'status',
         'amount',
         'amount_cents',

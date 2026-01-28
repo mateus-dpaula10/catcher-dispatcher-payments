@@ -6,7 +6,7 @@
     <div class="container-fluid" id="profile_index">
         <div class="row">
             <div class="col-12 px">
-                <div class="card card-glass" style="min-height: 100vh">
+                <div class="card card-glass" style="min-height: 100vh; padding-bottom: 50px">
                     <div class="px-4 pt-4 pb-3 border-bottom" style="border-color: rgba(255,255,255,.10)!important;">
                         <h5 class="mb-1 section-title">Editar perfil</h5>
                         <div class="small section-subtitle">Atualize seus dados, foto e senha</div>

@@ -36,6 +36,7 @@ class DadosSusanPetRescue extends Model
         'utm_medium',
         'utm_content',
         'utm_term',
+        'popup_5dol',
         'pix_key',
         'pix_description',
 
@@ -47,5 +48,6 @@ class DadosSusanPetRescue extends Model
 
     protected $casts = [
         'event_time' => 'integer',
+        'popup_5dol' => 'boolean',
     ];
 }

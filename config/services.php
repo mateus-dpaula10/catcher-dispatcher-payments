@@ -35,6 +35,11 @@ return [
         ],
     ],
 
+    'facebook_capi_siulsan_resgate' => [
+        'pixel_id'      => env('PIXEL_ID_SIULSAN_RESGATE'),
+        'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SIULSAN_RESGATE'),
+    ],
+
     'facebook_capi_siulsan_resgate_b1s' => [
         'pixel_id'      => env('PIXEL_ID_SIULSAN_RESGATE_B1S'),
         'access_token'  => env('FACEBOOK_ACCESS_TOKEN_SIULSAN_RESGATE_B1S'),
@@ -98,5 +103,14 @@ return [
         'verify_webhook'=> env('PAYPAL_VERIFY_WEBHOOK', true),
 
         'test_secret'   => env('PAYPAL_WEBHOOK_TEST_SECRET', '')
-    ]
+    ],
+
+    'nuvei' => [
+        'environment' => env('NUVEI_ENV', 'prod'),
+        'merchant_id' => env('NUVEI_MERCHANT_ID'),
+        'merchant_site_id' => env('NUVEI_MERCHANT_SITE_ID'),
+        'secret_key' => env('NUVEI_SECRET_KEY'),
+        'endpoint_prod' => env('NUVEI_ENDPOINT_PROD', 'https://secure.safecharge.com/ppp/api/v1/openOrder.do'),
+        'endpoint_int' => env('NUVEI_ENDPOINT_INT', 'https://ppp-test.safecharge.com/ppp/api/v1/openOrder.do'),
+    ],
 ];

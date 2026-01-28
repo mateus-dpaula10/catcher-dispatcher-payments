@@ -6,7 +6,7 @@
     <div class="container-fluid" id="dashboard_index">
         <div class="row">
             <div class="col-12 px-0">
-                <div class="card" style="min-height: 100vh">
+                <div class="card" style="min-height: 100vh; padding-bottom: 50px">
                     <div class="card-body px-0">
                         @php
                             $baseQuery = request()->except('page');
@@ -32,23 +32,29 @@
                         <form method="get" class="mb-3">
                             <input type="hidden" name="tab" value="{{ $tab ?? request('tab', 'geral') }}">
 
-                            @php
-                                $useRange = request()->boolean('periodo');
+                                @php
+                                    $useRange = request()->boolean('periodo');
 
-                                $selectedStatus = (array) request('status_in', []);
-                                $selectedMethod = (array) request('method_in', []);
-                                $selectedAmount = (array) request('amount_in', []);
+                                    $selectedStatus = (array) request('status_in', []);
+                                    $selectedMethod = (array) request('method_in', []);
+                                    $selectedAmount = (array) request('amount_in', []);
+                                    $selectedPageUrl = (array) request('page_url_in', []);
 
-                                $useStatusFilter = request()->boolean('f_status') || !empty($selectedStatus);
-                                $useMethodFilter = request()->boolean('f_method') || !empty($selectedMethod);
-                                $useAmountFilter = request()->boolean('f_amount') || !empty($selectedAmount);
+                                    $useStatusFilter = request()->boolean('f_status') || !empty($selectedStatus);
+                                    $useMethodFilter = request()->boolean('f_method') || !empty($selectedMethod);
+                                    $useAmountFilter = request()->boolean('f_amount') || !empty($selectedAmount);
+                                    $usePageUrlFilter = request()->boolean('f_page_url') || !empty($selectedPageUrl);
 
-                                $statusAll = request()->boolean('status_all');
-                                $methodAll = request()->boolean('method_all');
-                                $amountAll = request()->boolean('amount_all');
+                                    $statusAll = request()->boolean('status_all');
+                                    $methodAll = request()->boolean('method_all');
+                                    $amountAll = request()->boolean('amount_all');
+                                    $pageUrlAll = request()->boolean('page_url_all');
+                                    $selectedPopupBackredirect = (array) request('popup_backredirect_in', []);
+                                    $usePopupBackredirectFilter = request()->boolean('f_popup_backredirect') || !empty($selectedPopupBackredirect);
+                                    $popupBackredirectAll = request()->boolean('popup_backredirect_all');
 
-                                $currency = ($tab ?? request('tab', 'geral')) === 'susan' ? '$' : 'R$';
-                            @endphp
+                                    $currency = ($tab ?? request('tab', 'geral')) === 'susan' ? '$' : 'R$';
+                                @endphp
 
                             <div class="row g-2 align-items-end">
                                 {{-- Data base --}}
@@ -118,6 +124,23 @@
                                             id="chkAmountFilter" {{ $useAmountFilter ? 'checked' : '' }}>
                                         <label class="form-check-label" for="chkAmountFilter">Filtrar amount</label>
                                     </div>
+
+                                    @if ($currentTab === 'susan')
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="f_popup_backredirect"
+                                                value="1" id="chkPopupBackredirectFilter"
+                                                {{ $usePopupBackredirectFilter ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="chkPopupBackredirectFilter">Filtrar popup backredirect</label>
+                                        </div>
+                                    @endif
+
+                                    @if (in_array($currentTab, ['susan', 'geral']))
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="f_page_url" value="1"
+                                                id="chkPageUrlFilter" {{ $usePageUrlFilter ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="chkPageUrlFilter">Filtrar page_url</label>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -233,9 +256,84 @@
                                             @endforeach
                                         </div>
                                     </div>
+                            </div>
+                        </div>
+                        @if ($currentTab === 'susan')
+                            <div class="row g-2 align-items-end mt-2" id="wrapPopupBackredirect"
+                                style="{{ $usePopupBackredirectFilter ? '' : 'display:none;' }}">
+                                <div class="col-12" id="col-popup-backredirect">
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="popup_backredirect_all"
+                                                value="1" id="chkPopupBackredirectAll"
+                                                {{ $popupBackredirectAll || (!$popupBackredirectAll && empty($selectedPopupBackredirect)) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="chkPopupBackredirectAll">Todos</label>
+                                        </div>
+                                        <div class="small text-muted">Selecione 1+ opções para filtrar</div>
+                                    </div>
+
+                                    <div class="border rounded p-2" style="max-height:140px; overflow:auto;">
+                                        <div class="row g-1">
+                                            @foreach ($popupBackredirectOptions ?? [] as $option)
+                                                @php
+                                                    $qtd = (int) ($popupBackredirectCounts[$option] ?? 0);
+                                                    $label = $option === '1' ? 'Sim' : 'Não';
+                                                @endphp
+                                                <div class="col-md-3 col-6">
+                                                    <div class="form-check d-flex align-items-center gap-2">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <input class="form-check-input chk-popup-backredirect-item"
+                                                                type="checkbox" name="popup_backredirect_in[]"
+                                                                value="{{ $option }}" id="pb_{{ $option }}"
+                                                                {{ in_array($option, $selectedPopupBackredirect, true) ? 'checked' : '' }}>
+                                                            <label class="form-check-label mb-0"
+                                                                for="pb_{{ $option }}">{{ $label }}</label>
+                                                        </div>
+                                                        <span class="badge bg-secondary">{{ $qtd }}</span>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
+                        @endif
+                        <div class="row g-2 align-items-end mt-2" id="wrapPageUrl"
+                            style="{{ $usePageUrlFilter ? '' : 'display:none;' }}">
+                            <div class="col-12" id="col-page-url">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="page_url_all"
+                                            value="1" id="chkPageUrlAll"
+                                            {{ $pageUrlAll || (!$pageUrlAll && empty($selectedPageUrl)) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="chkPageUrlAll">Todos</label>
+                                    </div>
+                                    <div class="small text-muted">Selecione 1+ page_url para filtrar</div>
+                                </div>
+
+                                <div class="border rounded p-2" style="max-height:160px; overflow:auto;">
+                                    <div class="row g-1">
+                                        @foreach ($pageUrlOptions ?? [] as $url)
+                                            @php $qtd = (int) ($pageUrlCounts[$url] ?? 0); @endphp
+                                            <div class="col-md-4 col-6">
+                                                <div class="form-check d-flex align-items-center gap-2">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <input class="form-check-input chk-page-url-item"
+                                                            type="checkbox" name="page_url_in[]"
+                                                            value="{{ $url }}" id="pu_{{ md5($url) }}"
+                                                            {{ in_array($url, $selectedPageUrl, true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label mb-0"
+                                                            for="pu_{{ md5($url) }}">{{ \Illuminate\Support\Str::limit($url, 40) }}</label>
+                                                    </div>
+                                                    <span class="badge bg-secondary">{{ $qtd }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
 
                         @if (isset($totaisGerais, $totaisFiltrados))
                             @php
@@ -257,7 +355,7 @@
 
                             <div class="row g-3 mb-3">
                                 {{-- Totais gerais --}}
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Initiate Checkout (GERAL)</div>
@@ -283,7 +381,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Paid (GERAL)</div>
@@ -309,8 +407,34 @@
                                     </div>
                                 </div>
 
+                                <div class="col-md-2">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body d-flex flex-column justify-content-center py-2">
+                                            <div class="text-muted small">Failed (GERAL)</div>
+
+                                            <div class="fw-bold text-danger">
+                                                {{ $currency }} {{ $fmtMoney($totaisGerais->failed_cents ?? 0) }}
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                {{ $fmtInt($totaisGerais->failed_count ?? 0) }} registro(s)
+                                            </div>
+
+                                            @if ($isUSD && $usdAvg)
+                                                @php $brl = $toBRL($totaisGerais->failed_cents ?? 0); @endphp
+                                                @if (!is_null($brl))
+                                                    <div class="small text-muted">
+                                                        ≈ R$ {{ $fmtBRL($brl) }} <span class="opacity-75">(média 7d:
+                                                            {{ number_format($usdAvg, 4, ',', '.') }})</span>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {{-- Totais filtrados --}}
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Initiate Checkout (FILTRO)</div>
@@ -337,7 +461,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body d-flex flex-column justify-content-center py-2">
                                             <div class="text-muted small">Paid (FILTRO)</div>
@@ -362,6 +486,33 @@
                                             @endif
                                         </div>
                                     </div>
+                                </div>                                
+
+                                <div class="col-md-2">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body d-flex flex-column justify-content-center py-2">
+                                            <div class="text-muted small">Failed (FILTRO)</div>
+
+                                            <div class="fw-bold text-danger">
+                                                {{ $currency }} {{ $fmtMoney($totaisFiltrados->failed_cents ?? 0) }}
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                {{ $fmtInt($totaisFiltrados->failed_count ?? 0) }} registro(s) — baseado nos
+                                                resultados atuais
+                                            </div>
+
+                                            @if ($isUSD && $usdAvg)
+                                                @php $brl = $toBRL($totaisFiltrados->failed_cents ?? 0); @endphp
+                                                @if (!is_null($brl))
+                                                    <div class="small text-muted">
+                                                        ≈ R$ {{ $fmtBRL($brl) }} <span class="opacity-75">(média 7d:
+                                                            {{ number_format($usdAvg, 4, ',', '.') }})</span>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -374,6 +525,7 @@
                                         <th>created_at</th>
                                         <th>updated_at</th>
                                         <th>status</th>
+                                        <th>popup backredirect</th>
                                         <th>amount</th>
                                         <th>amount_cents</th>
                                         <th>first_name</th>
@@ -411,6 +563,7 @@
                                             <td>{{ $dado->created_at ?? 'N/A' }}</td>
                                             <td>{{ $dado->updated_at ?? 'N/A' }}</td>
                                             <td>{{ $dado->status ?? 'N/A' }}</td>
+                                            <td>{{ $dado->popup_5dol ? 'Sim' : 'N/A' }}</td>
                                             <td>{{ $dado->amount ?? 'N/A' }}</td>
                                             <td>{{ $dado->amount_cents ?? 'N/A' }}</td>
                                             <td>{{ $dado->first_name ?? 'N/A' }}</td>
@@ -589,6 +742,16 @@
                 bindShowHide('chkAmountFilter', 'wrapAmount', () => clearGroup('chkAmountAll',
                     '.chk-amount-item'));
                 bindAllToggle('chkAmountAll', '.chk-amount-item');
+
+                // D) Popup backredirect
+                bindShowHide('chkPopupBackredirectFilter', 'wrapPopupBackredirect', () => clearGroup('chkPopupBackredirectAll',
+                    '.chk-popup-backredirect-item'));
+                bindAllToggle('chkPopupBackredirectAll', '.chk-popup-backredirect-item');
+
+                // E) Page URL
+                bindShowHide('chkPageUrlFilter', 'wrapPageUrl', () => clearGroup('chkPageUrlAll',
+                    '.chk-page-url-item'));
+                bindAllToggle('chkPageUrlAll', '.chk-page-url-item');
             });
         })();
     </script>

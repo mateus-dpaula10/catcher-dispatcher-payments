@@ -11,6 +11,7 @@ use App\Http\Controllers\PaidSusanPetRescueController;
 use App\Http\Controllers\PayPalController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\NuveiController;
+use App\Http\Controllers\OngRegistroController;
 use App\Http\Controllers\SquareController;
 
 Route::post('/checkout-br', [CheckoutController::class, 'handleCheckoutBr']);
@@ -39,3 +40,5 @@ Route::post('/square/payment', [SquareController::class, 'createPayment']);
 Route::post('/square/payment/confirmed', [SquareController::class, 'handlePaid']);
 
 Route::post('/nuvei/open-order', [NuveiController::class, 'openOrder']);
+
+Route::post('/ong/submit', [OngRegistroController::class, 'store']);

@@ -52,13 +52,19 @@
                 box-shadow: 0 10px 22px rgba(141, 0, 0, 0.25);
                 font-weight: 600;
 
-                &:hover {
-                    filter: brightness(1.06);
-                    transform: translateY(-1px);
-                }
+                // &:hover {
+                //     filter: brightness(1.06);
+                //     transform: translateY(-1px);
+                // }
 
                 &:active {
                     transform: translateY(0);
+                }
+            }
+
+            .btn.btn-success {
+                &:hover {
+                    background-color: #198754;
                 }
             }
 

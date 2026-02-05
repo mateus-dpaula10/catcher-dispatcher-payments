@@ -41,12 +41,11 @@
   box-shadow: 0 10px 22px rgba(141, 0, 0, 0.25);
   font-weight: 600;
 }
-#dashboard_index .card > .card-body .btn.btn-primary:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-}
 #dashboard_index .card > .card-body .btn.btn-primary:active {
   transform: translateY(0);
+}
+#dashboard_index .card > .card-body .btn.btn-success:hover {
+  background-color: #198754;
 }
 #dashboard_index .card > .card-body .table-responsive {
   background: rgba(255, 255, 255, 0.05);

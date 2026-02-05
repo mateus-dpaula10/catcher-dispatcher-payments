@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EmailTrackingController;
+use App\Http\Controllers\OngRegistroController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'index'])->name('login');
@@ -27,6 +28,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
 
     Route::get('/perfil', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/perfil/update', [ProfileController::class, 'update'])->name('profile.update');
@@ -38,11 +40,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('/email-tracking', [EmailTrackingController::class, 'index'])->name('t.index');
+
+        Route::get('/ongs', [OngRegistroController::class, 'index'])->name('ongs.index');
+        Route::put('/ongs/{ong}', [OngRegistroController::class, 'update'])->name('ongs.update');
+        Route::delete('/ongs/{ong}', [OngRegistroController::class, 'destroy'])->name('ongs.destroy');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-});
-
-Route::get('/teste', function() {
-    return view ('emails.donation_paid_html');
 });

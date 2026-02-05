@@ -54,7 +54,7 @@ class DashboardIndexService
         $filters = $this->parseFilters($request, $tab);
 
         // 3) facets
-        [$statusOptions, $statusCounts, $methodOptions, $methodCounts, $amountOptionsCents, $amountCounts, $pageUrlCounts, $popupBackredirectOptions, $popupBackredirectCounts]
+        [$statusOptions, $statusCounts, $methodOptions, $methodCounts, $amountOptionsCents, $amountCounts, $pixKeyOptions, $pixKeyCounts, $slugOptions, $slugCounts, $pageUrlCounts, $popupBackredirectOptions, $popupBackredirectCounts]
             = $this->buildFacets($base, $filters, $tab);
 
         // 4) query final
@@ -104,6 +104,10 @@ class DashboardIndexService
             'statusOptions',
             'methodOptions',
             'amountOptionsCents',
+            'pixKeyOptions',
+            'pixKeyCounts',
+            'slugOptions',
+            'slugCounts',
             'statusCounts',
             'methodCounts',
             'amountCounts',
@@ -113,6 +117,20 @@ class DashboardIndexService
             'popupBackredirectOptions',
             'popupBackredirectCounts'
         );
+    }
+
+    public function buildFilteredQuery(Request $request): Builder
+    {
+        $tab = (string) $request->get('tab', 'susan');
+        $model = $this->resolveModel($tab);
+
+        $base = $model::query();
+        $this->applyDateTimeFilter($base, $request);
+        $this->applySearch($base, $request, $tab);
+
+        $filters = $this->parseFilters($request, $tab);
+
+        return $this->applyFilters($base, $filters, null, $tab);
     }
 
     private function resolveModel(string $tab): string
@@ -190,6 +208,8 @@ class DashboardIndexService
         $statusAll = $request->boolean('status_all');
         $methodAll = $request->boolean('method_all');
         $amountAll = $request->boolean('amount_all');
+        $pixKeyAll = $request->boolean('pix_key_all');
+        $slugAll = $request->boolean('slug_all');
         $pageUrlAll = $request->boolean('page_url_all');
         $popupBackredirectAll = $request->boolean('popup_backredirect_all');
 
@@ -209,6 +229,18 @@ class DashboardIndexService
         ));
         $selectedAmounts = array_map('intval', $selectedAmounts);
 
+        $selectedPixKeys = array_values(array_filter(
+            (array) $request->input('pix_key_in', []),
+            fn($v) => is_string($v) && trim($v) !== ''
+        ));
+        $selectedPixKeys = array_values(array_unique(array_map('trim', $selectedPixKeys)));
+
+        $selectedSlugs = array_values(array_filter(
+            (array) $request->input('slug_in', []),
+            fn($v) => is_string($v) && trim($v) !== ''
+        ));
+        $selectedSlugs = array_values(array_unique(array_map('trim', $selectedSlugs)));
+
         $selectedPageUrls = array_values(array_filter(
             (array) $request->input('page_url_in', []),
             fn($v) => is_string($v) && $this->isValidPageUrlOption($v, $tab)
@@ -223,6 +255,8 @@ class DashboardIndexService
         $useStatusFilter = $request->boolean('f_status') || !empty($selectedStatus);
         $useMethodFilter = $request->boolean('f_method') || !empty($selectedMethod);
         $useAmountFilter = $request->boolean('f_amount') || !empty($selectedAmounts);
+        $usePixKeyFilter = $request->boolean('f_pix_key') || !empty($selectedPixKeys);
+        $useSlugFilter = $request->boolean('f_slug') || !empty($selectedSlugs);
         $allowedPageUrlTab = in_array($tab, ['susan', 'geral'], true);
         $usePageUrlFilter = $allowedPageUrlTab && ($request->boolean('f_page_url') || !empty($selectedPageUrls));
         $allowedPopupBackredirectTab = $tab === 'susan';
@@ -232,16 +266,22 @@ class DashboardIndexService
             'statusAll',
             'methodAll',
             'amountAll',
+            'pixKeyAll',
+            'slugAll',
             'pageUrlAll',
             'popupBackredirectAll',
             'selectedStatus',
             'selectedMethod',
             'selectedAmounts',
+            'selectedPixKeys',
+            'selectedSlugs',
             'selectedPageUrls',
             'selectedPopupBackredirect',
             'useStatusFilter',
             'useMethodFilter',
             'useAmountFilter',
+            'usePixKeyFilter',
+            'useSlugFilter',
             'usePageUrlFilter',
             'usePopupBackredirectFilter',
         );
@@ -259,6 +299,14 @@ class DashboardIndexService
 
         if ($skip !== 'amount' && $f['useAmountFilter'] && !$f['amountAll'] && !empty($f['selectedAmounts'])) {
             $q->whereIn('amount_cents', $f['selectedAmounts']);
+        }
+
+        if ($skip !== 'pix_key' && $f['usePixKeyFilter'] && !$f['pixKeyAll'] && !empty($f['selectedPixKeys'])) {
+            $q->whereIn('pix_key', $f['selectedPixKeys']);
+        }
+
+        if ($skip !== 'slug' && $f['useSlugFilter'] && !$f['slugAll'] && !empty($f['selectedSlugs'])) {
+            $q->whereIn(DB::raw($this->pageUrlSlugExpression()), $f['selectedSlugs']);
         }
 
         if (
@@ -329,6 +377,36 @@ class DashboardIndexService
         $amountOptionsCents = $amountAgg->pluck('amount_cents')->map(fn($v) => (int) $v)->values()->all();
         $amountCounts       = $amountAgg->pluck('total', 'amount_cents')->toArray();
 
+        // PIX KEY
+        $pixKeyFacetBase = $this->applyFilters(clone $base, $filters, 'pix_key', $tab);
+        $pixKeyAgg = $pixKeyFacetBase
+            ->select('pix_key', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('pix_key')
+            ->where('pix_key', '<>', '')
+            ->groupBy('pix_key')
+            ->orderByDesc('total')
+            ->limit(200)
+            ->get();
+
+        $pixKeyOptions = $pixKeyAgg->pluck('pix_key')->values()->all();
+        $pixKeyCounts  = $pixKeyAgg->pluck('total', 'pix_key')->toArray();
+
+        // SLUG (tudo apÃ³s o domÃ­nio na page_url)
+        $slugExpr = $this->pageUrlSlugExpression();
+        $slugFacetBase = $this->applyFilters(clone $base, $filters, 'slug', $tab);
+        $slugAgg = $slugFacetBase
+            ->select(DB::raw("{$slugExpr} as slug"), DB::raw('COUNT(*) as total'))
+            ->whereNotNull('page_url')
+            ->where('page_url', '<>', '')
+            ->whereRaw("{$slugExpr} <> ''")
+            ->groupBy(DB::raw($slugExpr))
+            ->orderByDesc('total')
+            ->limit(200)
+            ->get();
+
+        $slugOptions = $slugAgg->pluck('slug')->values()->all();
+        $slugCounts  = $slugAgg->pluck('total', 'slug')->toArray();
+
         $pageUrlCounts = [];
         if (in_array($tab, ['susan', 'geral'], true)) {
             $pageUrlFacetBase = $this->applyFilters(clone $base, $filters, 'page_url', $tab);
@@ -351,7 +429,7 @@ class DashboardIndexService
             $popupBackredirectOptions = ['1', '0'];
         }
 
-        return [$statusOptions, $statusCounts, $methodOptions, $methodCounts, $amountOptionsCents, $amountCounts, $pageUrlCounts, $popupBackredirectOptions, $popupBackredirectCounts];
+        return [$statusOptions, $statusCounts, $methodOptions, $methodCounts, $amountOptionsCents, $amountCounts, $pixKeyOptions, $pixKeyCounts, $slugOptions, $slugCounts, $pageUrlCounts, $popupBackredirectOptions, $popupBackredirectCounts];
     }
 
     private function isValidPageUrlOption(string $label, string $tab): bool
@@ -393,6 +471,25 @@ class DashboardIndexService
         }
 
         return $q;
+    }
+
+    private function pageUrlSlugExpression(): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            $noScheme = "REGEXP_REPLACE(page_url, '^https?://', '')";
+            return "CASE WHEN position('/' in {$noScheme}) > 0 THEN substring({$noScheme} from position('/' in {$noScheme}) + 1) ELSE '' END";
+        }
+
+        if ($driver === 'sqlite') {
+            $noScheme = "CASE WHEN page_url LIKE 'http://%' THEN substr(page_url, 8) WHEN page_url LIKE 'https://%' THEN substr(page_url, 9) ELSE page_url END";
+            return "CASE WHEN instr({$noScheme}, '/') > 0 THEN substr({$noScheme}, instr({$noScheme}, '/') + 1) ELSE '' END";
+        }
+
+        // mysql/mariadb (default)
+        $noScheme = "CASE WHEN page_url LIKE 'http://%' THEN SUBSTRING(page_url, 8) WHEN page_url LIKE 'https://%' THEN SUBSTRING(page_url, 9) ELSE page_url END";
+        return "CASE WHEN LOCATE('/', {$noScheme}) > 0 THEN SUBSTRING({$noScheme}, LOCATE('/', {$noScheme}) + 1) ELSE '' END";
     }
 
     private function usdBrlAvg7d(): ?float

@@ -32,29 +32,35 @@
                         <form method="get" class="mb-3">
                             <input type="hidden" name="tab" value="{{ $tab ?? request('tab', 'geral') }}">
 
-                                @php
-                                    $useRange = request()->boolean('periodo');
+                            @php
+                                $useRange = request()->boolean('periodo');
 
-                                    $selectedStatus = (array) request('status_in', []);
-                                    $selectedMethod = (array) request('method_in', []);
-                                    $selectedAmount = (array) request('amount_in', []);
-                                    $selectedPageUrl = (array) request('page_url_in', []);
+                                $selectedStatus = (array) request('status_in', []);
+                                $selectedMethod = (array) request('method_in', []);
+                                $selectedAmount = (array) request('amount_in', []);
+                                $selectedPageUrl = (array) request('page_url_in', []);
+                                $selectedPixKey = (array) request('pix_key_in', []);
+                                $selectedSlug = (array) request('slug_in', []);
 
-                                    $useStatusFilter = request()->boolean('f_status') || !empty($selectedStatus);
-                                    $useMethodFilter = request()->boolean('f_method') || !empty($selectedMethod);
-                                    $useAmountFilter = request()->boolean('f_amount') || !empty($selectedAmount);
-                                    $usePageUrlFilter = request()->boolean('f_page_url') || !empty($selectedPageUrl);
+                                $useStatusFilter = request()->boolean('f_status') || !empty($selectedStatus);
+                                $useMethodFilter = request()->boolean('f_method') || !empty($selectedMethod);
+                                $useAmountFilter = request()->boolean('f_amount') || !empty($selectedAmount);
+                                $usePageUrlFilter = request()->boolean('f_page_url') || !empty($selectedPageUrl);
+                                $usePixKeyFilter = request()->boolean('f_pix_key') || !empty($selectedPixKey);
+                                $useSlugFilter = request()->boolean('f_slug') || !empty($selectedSlug);
 
-                                    $statusAll = request()->boolean('status_all');
-                                    $methodAll = request()->boolean('method_all');
-                                    $amountAll = request()->boolean('amount_all');
-                                    $pageUrlAll = request()->boolean('page_url_all');
-                                    $selectedPopupBackredirect = (array) request('popup_backredirect_in', []);
-                                    $usePopupBackredirectFilter = request()->boolean('f_popup_backredirect') || !empty($selectedPopupBackredirect);
-                                    $popupBackredirectAll = request()->boolean('popup_backredirect_all');
+                                $statusAll = request()->boolean('status_all');
+                                $methodAll = request()->boolean('method_all');
+                                $amountAll = request()->boolean('amount_all');
+                                $pageUrlAll = request()->boolean('page_url_all');
+                                $pixKeyAll = request()->boolean('pix_key_all');
+                                $slugAll = request()->boolean('slug_all');
+                                $selectedPopupBackredirect = (array) request('popup_backredirect_in', []);
+                                $usePopupBackredirectFilter = request()->boolean('f_popup_backredirect') || !empty($selectedPopupBackredirect);
+                                $popupBackredirectAll = request()->boolean('popup_backredirect_all');
 
-                                    $currency = ($tab ?? request('tab', 'geral')) === 'susan' ? '$' : 'R$';
-                                @endphp
+                                $currency = ($tab ?? request('tab', 'geral')) === 'susan' ? '$' : 'R$';
+                            @endphp
 
                             <div class="row g-2 align-items-end">
                                 {{-- Data base --}}
@@ -94,14 +100,25 @@
                                 </div>
 
                                 {{-- Busca --}}
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <label class="form-label">Pesquisar</label>
                                     <input type="text" name="search" class="form-control" placeholder="Buscar..."
                                         value="{{ request('search') }}">
                                 </div>
 
-                                <div class="col-md-1 d-grid">
-                                    <button class="btn btn-primary">Buscar</button>
+                                <div class="col-md-2">
+                                    <div class="row g-2">
+                                        <div class="col-md-6 d-grid">
+                                            <button class="btn btn-primary">Buscar</button>
+                                        </div>
+                                        
+                                        <div class="col-md-6 d-grid">
+                                            <a class="btn btn-success"
+                                                href="{{ route('dashboard.export', array_merge($baseQuery, ['tab' => $tab ?? request('tab', 'geral')])) }}">
+                                                Exportar Excel
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -123,6 +140,18 @@
                                         <input class="form-check-input" type="checkbox" name="f_amount" value="1"
                                             id="chkAmountFilter" {{ $useAmountFilter ? 'checked' : '' }}>
                                         <label class="form-check-label" for="chkAmountFilter">Filtrar amount</label>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="f_pix_key" value="1"
+                                            id="chkPixKeyFilter" {{ $usePixKeyFilter ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="chkPixKeyFilter">Filtrar chave pix</label>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="f_slug" value="1"
+                                            id="chkSlugFilter" {{ $useSlugFilter ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="chkSlugFilter">Filtrar slug</label>
                                     </div>
 
                                     @if ($currentTab === 'susan')
@@ -258,6 +287,79 @@
                                     </div>
                             </div>
                         </div>
+
+                        <div class="row g-2 align-items-end mt-2" id="wrapPixKey"
+                            style="{{ $usePixKeyFilter ? '' : 'display:none;' }}">
+                            <div class="col-12" id="col-pix-key">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="pix_key_all"
+                                            value="1" id="chkPixKeyAll"
+                                            {{ $pixKeyAll || (!$pixKeyAll && empty($selectedPixKey)) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="chkPixKeyAll">Todos</label>
+                                    </div>
+                                    <div class="small text-muted">Selecione 1+ chaves para filtrar</div>
+                                </div>
+
+                                <div class="border rounded p-2" style="max-height:160px; overflow:auto;">
+                                    <div class="row g-1">
+                                        @foreach ($pixKeyOptions ?? [] as $pk)
+                                            @php $qtd = (int) (($pixKeyCounts[$pk] ?? 0)); @endphp
+                                            <div class="col-md-4 col-6">
+                                                <div class="form-check d-flex align-items-center gap-2">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <input class="form-check-input chk-pix-key-item"
+                                                            type="checkbox" name="pix_key_in[]"
+                                                            value="{{ $pk }}" id="pk_{{ md5($pk) }}"
+                                                            {{ in_array($pk, $selectedPixKey, true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label mb-0"
+                                                            for="pk_{{ md5($pk) }}">{{ \Illuminate\Support\Str::limit($pk, 40) }}</label>
+                                                    </div>
+                                                    <span class="badge bg-secondary">{{ $qtd }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 align-items-end mt-2" id="wrapSlug"
+                            style="{{ $useSlugFilter ? '' : 'display:none;' }}">
+                            <div class="col-12" id="col-slug">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="slug_all"
+                                            value="1" id="chkSlugAll"
+                                            {{ $slugAll || (!$slugAll && empty($selectedSlug)) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="chkSlugAll">Todos</label>
+                                    </div>
+                                    <div class="small text-muted">Selecione 1+ slugs (após domínio) para filtrar</div>
+                                </div>
+
+                                <div class="border rounded p-2" style="max-height:160px; overflow:auto;">
+                                    <div class="row g-1">
+                                        @foreach ($slugOptions ?? [] as $slug)
+                                            @php $qtd = (int) (($slugCounts[$slug] ?? 0)); @endphp
+                                            <div class="col-md-4 col-6">
+                                                <div class="form-check d-flex align-items-center gap-2">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <input class="form-check-input chk-slug-item"
+                                                            type="checkbox" name="slug_in[]"
+                                                            value="{{ $slug }}" id="sl_{{ md5($slug) }}"
+                                                            {{ in_array($slug, $selectedSlug, true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label mb-0"
+                                                            for="sl_{{ md5($slug) }}">{{ \Illuminate\Support\Str::limit($slug, 80) }}</label>
+                                                    </div>
+                                                    <span class="badge bg-secondary">{{ $qtd }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         @if ($currentTab === 'susan')
                             <div class="row g-2 align-items-end mt-2" id="wrapPopupBackredirect"
                                 style="{{ $usePopupBackredirectFilter ? '' : 'display:none;' }}">
@@ -633,6 +735,7 @@
     <script>
         (function() {
             document.addEventListener('DOMContentLoaded', function() {
+
                 // =========================
                 // 1) PERÍODO (data_fim)
                 // =========================
@@ -742,6 +845,16 @@
                 bindShowHide('chkAmountFilter', 'wrapAmount', () => clearGroup('chkAmountAll',
                     '.chk-amount-item'));
                 bindAllToggle('chkAmountAll', '.chk-amount-item');
+
+                // C.2) Pix key
+                bindShowHide('chkPixKeyFilter', 'wrapPixKey', () => clearGroup('chkPixKeyAll',
+                    '.chk-pix-key-item'));
+                bindAllToggle('chkPixKeyAll', '.chk-pix-key-item');
+
+                // C.3) Slug
+                bindShowHide('chkSlugFilter', 'wrapSlug', () => clearGroup('chkSlugAll',
+                    '.chk-slug-item'));
+                bindAllToggle('chkSlugAll', '.chk-slug-item');
 
                 // D) Popup backredirect
                 bindShowHide('chkPopupBackredirectFilter', 'wrapPopupBackredirect', () => clearGroup('chkPopupBackredirectAll',

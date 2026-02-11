@@ -21,6 +21,8 @@ Route::post('/transfeera', [TransfeeraWebhookController::class, 'handle']);
 Route::post('/proanimal', [TransfeeraProAnimalController::class, 'receive']);
 Route::post('/siulsan', [TransfeeraSiulsanController::class, 'receive']);
 Route::post('/lytex/invoice', [LytexController::class, 'createInvoice']);
+Route::post('/lytex/pix/once', [LytexController::class, 'createPixOnce']);
+Route::post('/lytex/pix/recurring', [LytexController::class, 'createPixRecurring']);
 Route::post('/lytex/webhook', [LytexController::class, 'webhook']);
 Route::post('/automatic-pix/create-authorization', [TransfeeraAutoPixController::class, 'createAuthorization']);
 

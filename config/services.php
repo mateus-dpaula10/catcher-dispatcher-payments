@@ -78,9 +78,19 @@ return [
         'api_key' => env('LYTEX_API_TOKEN'),
         'client_id' => env('LYTEX_CLIENT_ID'),
         'client_secret' => env('LYTEX_CLIENT_SECRET'),
-        'auth_url' => env('LYTEX_AUTH_URL', 'https://sandbox-api-pay.lytex.com.br/v2/auth/obtain_token'),
-        'api_url' => env('LYTEX_API_URL', 'https://sandbox-api-pay.lytex.com.br/v2/invoices'),
-        'subscriptions_url' => env('LYTEX_SUBSCRIPTIONS_URL', 'https://sandbox-api-pay.lytex.com.br/v2/subscriptions')
+
+        'auth_url' => env('LYTEX_AUTH_URL'),
+
+        'api_url' => env('LYTEX_API_URL'),
+        'invoice_url' => env('LYTEX_INVOICE_URL', env('LYTEX_API_URL')),
+
+        'subscriptions_url' => env('LYTEX_SUBSCRIPTIONS_URL'),
+        'subscription_detail_url' => env('LYTEX_SUBSCRIPTION_DETAIL_URL'),
+        'invoice_detail_url' => env('LYTEX_INVOICE_DETAIL_URL'),
+    ],
+
+    'zapier' => [
+        'webhook_br' => env('JSZ_ZAPIER_WEBHOOK_BR'),
     ],
 
     'transfeera' => [

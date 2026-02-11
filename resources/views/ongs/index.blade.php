@@ -62,6 +62,7 @@
                                                     'veterinarian_value','collaborators_value','other_costs_value','other_costs_description','photo_urls','source_tag',
                                                  ]), [
                                                      'foundation_date' => optional($ong->foundation_date)->format('Y-m-d'),
+                                                     'created_at' => optional($ong->created_at)->toIso8601String(),
                                                  ]);
                                              @endphp
                                             <tr>
@@ -86,6 +87,16 @@
                                                 <td>R$ {{ number_format($totalCosts, 2, ',', '.') }}</td>
                                                 <td>{{ optional($ong->created_at)->format('d/m/Y H:i') }}</td>
                                                 <td class="text-nowrap">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-success"
+                                                        data-action="view"
+                                                        data-ong='@json($editPayload)'
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#ongViewModal"
+                                                    >
+                                                        Visualizar
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         class="btn btn-sm btn-outline-primary"
@@ -300,6 +311,156 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="ongViewModal" tabindex="-1" aria-labelledby="ongViewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ongViewModalLabel">Detalhes da ONG</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="fw-semibold">Dados</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Nome</div>
+                            <div data-view-field="name"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Email</div>
+                            <div data-view-field="email"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">CNPJ</div>
+                            <div data-view-field="cnpj"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Telefone</div>
+                            <div data-view-field="phone"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Data de fundação</div>
+                            <div data-view-field="foundation_date"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Quantidade de animais</div>
+                            <div data-view-field="animal_count"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Quantidade de cuidadores</div>
+                            <div data-view-field="caregiver_count"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Criado em</div>
+                            <div data-view-field="created_at"></div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted">Descrição</div>
+                            <div data-view-field="description"></div>
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
+                            <div class="fw-semibold">Endereço</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">CEP</div>
+                            <div data-view-field="zip"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Rua</div>
+                            <div data-view-field="street"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Número</div>
+                            <div data-view-field="number"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Complemento</div>
+                            <div data-view-field="complement"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Bairro</div>
+                            <div data-view-field="district"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Cidade</div>
+                            <div data-view-field="city"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Estado</div>
+                            <div data-view-field="state"></div>
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
+                            <div class="fw-semibold">Redes sociais</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Facebook</div>
+                            <a data-view-link="facebook" class="link-primary" target="_blank" rel="noopener"></a>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Instagram</div>
+                            <a data-view-link="instagram" class="link-primary" target="_blank" rel="noopener"></a>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Website</div>
+                            <a data-view-link="website" class="link-primary" target="_blank" rel="noopener"></a>
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
+                            <div class="fw-semibold">Custos mensais</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Ração</div>
+                            <div data-view-field="portion_value"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Medicamentos</div>
+                            <div data-view-field="medicines_value"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Veterinário</div>
+                            <div data-view-field="veterinarian_value"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Colaboradores</div>
+                            <div data-view-field="collaborators_value"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Outros custos</div>
+                            <div data-view-field="other_costs_value"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Total</div>
+                            <div data-view-field="total_costs"></div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted">Especificação de outros custos</div>
+                            <div data-view-field="other_costs_description"></div>
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
+                            <div class="fw-semibold">Mídias</div>
+                            <div class="mt-2">
+                                <label class="form-label mb-1">Fotos cadastradas</label>
+                                <div id="ongViewPhotos" class="ong-photo-preview" aria-live="polite"></div>
+                                <div id="ongViewPhotosEmpty" class="small text-muted">Nenhuma foto cadastrada.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -318,12 +479,44 @@
             const editModal = editModalEl && typeof bootstrap !== 'undefined' ? new bootstrap.Modal(editModalEl) : null;
             const editForm = document.getElementById('ong-edit-form');
             const editMessage = document.getElementById('editModalMessage');
-            const existingPhotosList = document.getElementById('ongExistingPhotos');
-            const existingPhotosEmpty = document.getElementById('ongExistingPhotosEmpty');
+             const existingPhotosList = document.getElementById('ongExistingPhotos');
+             const existingPhotosEmpty = document.getElementById('ongExistingPhotosEmpty');
              const newPhotosList = document.getElementById('ongNewPhotos');
              const newPhotosEmpty = document.getElementById('ongNewPhotosEmpty');
              const cnpjFeedback = document.getElementById('cnpj-feedback-modal');
              const cepFeedback = document.getElementById('cep-feedback-modal');
+
+             const viewModalEl = document.getElementById('ongViewModal');
+             const viewPhotosList = document.getElementById('ongViewPhotos');
+             const viewPhotosEmpty = document.getElementById('ongViewPhotosEmpty');
+             const viewFields = viewModalEl ? {
+                 name: viewModalEl.querySelector('[data-view-field="name"]'),
+                 email: viewModalEl.querySelector('[data-view-field="email"]'),
+                 cnpj: viewModalEl.querySelector('[data-view-field="cnpj"]'),
+                 phone: viewModalEl.querySelector('[data-view-field="phone"]'),
+                 foundation_date: viewModalEl.querySelector('[data-view-field="foundation_date"]'),
+                 animal_count: viewModalEl.querySelector('[data-view-field="animal_count"]'),
+                 caregiver_count: viewModalEl.querySelector('[data-view-field="caregiver_count"]'),
+                 created_at: viewModalEl.querySelector('[data-view-field="created_at"]'),
+                 description: viewModalEl.querySelector('[data-view-field="description"]'),
+                 zip: viewModalEl.querySelector('[data-view-field="zip"]'),
+                 street: viewModalEl.querySelector('[data-view-field="street"]'),
+                 number: viewModalEl.querySelector('[data-view-field="number"]'),
+                 complement: viewModalEl.querySelector('[data-view-field="complement"]'),
+                 district: viewModalEl.querySelector('[data-view-field="district"]'),
+                 city: viewModalEl.querySelector('[data-view-field="city"]'),
+                 state: viewModalEl.querySelector('[data-view-field="state"]'),
+                 portion_value: viewModalEl.querySelector('[data-view-field="portion_value"]'),
+                 medicines_value: viewModalEl.querySelector('[data-view-field="medicines_value"]'),
+                 veterinarian_value: viewModalEl.querySelector('[data-view-field="veterinarian_value"]'),
+                 collaborators_value: viewModalEl.querySelector('[data-view-field="collaborators_value"]'),
+                 other_costs_value: viewModalEl.querySelector('[data-view-field="other_costs_value"]'),
+                 total_costs: viewModalEl.querySelector('[data-view-field="total_costs"]'),
+                 other_costs_description: viewModalEl.querySelector('[data-view-field="other_costs_description"]'),
+                 facebook: viewModalEl.querySelector('[data-view-link="facebook"]'),
+                 instagram: viewModalEl.querySelector('[data-view-link="instagram"]'),
+                 website: viewModalEl.querySelector('[data-view-link="website"]'),
+             } : {};
 
              function registerOptionalField(checkbox, input) {
                  if (!checkbox || !input) return () => {};
@@ -402,6 +595,40 @@
                  return Number(n).toFixed(2).replace('.', ',');
              }
 
+             function setViewText(el, value) {
+                 if (!el) return;
+                 const text = (value === null || value === undefined || value === '') ? '--' : value;
+                 el.textContent = text;
+             }
+
+             function formatDateBr(value, withTime = false) {
+                 if (!value) return '--';
+                 const raw = typeof value === 'string' && !value.includes('T') ? `${value}T00:00:00` : value;
+                 const d = new Date(raw);
+                 if (Number.isNaN(d.getTime())) return value;
+                 return withTime ? d.toLocaleString('pt-BR') : d.toLocaleDateString('pt-BR');
+             }
+
+             function formatMoney(value) {
+                 if (value === null || value === undefined || value === '') return '--';
+                 const n = Number(value);
+                 if (Number.isNaN(n)) return value;
+                 return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+             }
+
+             function setViewLink(el, value) {
+                 if (!el) return;
+                 const raw = (value || '').toString().trim();
+                 if (!raw) {
+                     el.textContent = '--';
+                     el.removeAttribute('href');
+                     return;
+                 }
+                 const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+                 el.textContent = raw;
+                 el.setAttribute('href', href);
+             }
+
              function registerMoneyInput(input) {
                  if (!input) return;
 
@@ -478,6 +705,34 @@
                     item.appendChild(hidden);
                     item.appendChild(remove);
                     existingPhotosList.appendChild(item);
+                });
+            }
+
+            function renderViewPhotos(urls) {
+                if (!viewPhotosList) return;
+
+                viewPhotosList.innerHTML = '';
+                const list = Array.isArray(urls) ? urls : [];
+                const normalized = list
+                    .filter(url => typeof url === 'string')
+                    .map(url => url.trim())
+                    .filter(Boolean);
+
+                if (viewPhotosEmpty) {
+                    viewPhotosEmpty.classList.toggle('d-none', normalized.length > 0);
+                }
+
+                normalized.forEach(url => {
+                    const item = document.createElement('div');
+                    item.className = 'ong-photo-item';
+
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = 'Foto';
+                    img.loading = 'lazy';
+
+                    item.appendChild(img);
+                    viewPhotosList.appendChild(item);
                 });
             }
 
@@ -661,6 +916,60 @@
                 });
                 renderNewPhotoPreview();
             }
+
+            document.querySelectorAll('[data-action="view"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const payload = JSON.parse(button.getAttribute('data-ong') || '{}');
+
+                    const cnpjValue = payload.cnpj_not_available ? 'Não informado' : (payload.cnpj || '--');
+                    const facebookValue = payload.facebook_not_available ? '' : (payload.facebook || '');
+                    const instagramValue = payload.instagram_not_available ? '' : (payload.instagram || '');
+                    const websiteValue = payload.website_not_available ? '' : (payload.website || '');
+
+                    setViewText(viewFields.name, payload.name);
+                    setViewText(viewFields.email, payload.email);
+                    setViewText(viewFields.cnpj, cnpjValue);
+                    setViewText(viewFields.phone, payload.phone || '--');
+                    setViewText(viewFields.foundation_date, formatDateBr(payload.foundation_date));
+                    setViewText(viewFields.animal_count, payload.animal_count ?? '--');
+                    setViewText(viewFields.caregiver_count, payload.caregiver_count ?? '--');
+                    setViewText(viewFields.created_at, formatDateBr(payload.created_at, true));
+                    setViewText(viewFields.description, payload.description || '--');
+
+                    setViewText(viewFields.zip, payload.zip || '--');
+                    setViewText(viewFields.street, payload.street || '--');
+                    setViewText(viewFields.number, payload.number || '--');
+                    setViewText(viewFields.complement, payload.complement || '--');
+                    setViewText(viewFields.district, payload.district || '--');
+                    setViewText(viewFields.city, payload.city || '--');
+                    setViewText(viewFields.state, payload.state || '--');
+
+                    setViewLink(viewFields.facebook, facebookValue);
+                    setViewLink(viewFields.instagram, instagramValue);
+                    setViewLink(viewFields.website, websiteValue);
+
+                    setViewText(viewFields.portion_value, formatMoney(payload.portion_value));
+                    setViewText(viewFields.medicines_value, formatMoney(payload.medicines_value));
+                    setViewText(viewFields.veterinarian_value, formatMoney(payload.veterinarian_value));
+                    setViewText(viewFields.collaborators_value, formatMoney(payload.collaborators_value));
+                    setViewText(viewFields.other_costs_value, formatMoney(payload.other_costs_value));
+                    setViewText(viewFields.other_costs_description, payload.other_costs_description || '--');
+
+                    const totalCosts = [
+                        payload.portion_value,
+                        payload.medicines_value,
+                        payload.veterinarian_value,
+                        payload.collaborators_value,
+                        payload.other_costs_value,
+                    ]
+                        .map(v => Number(v))
+                        .filter(v => !Number.isNaN(v))
+                        .reduce((a, b) => a + b, 0);
+                    setViewText(viewFields.total_costs, formatMoney(totalCosts));
+
+                    renderViewPhotos(payload.photo_urls);
+                });
+            });
 
             document.querySelectorAll('[data-action="edit"]').forEach(button => {
                 button.addEventListener('click', () => {

@@ -39,6 +39,7 @@
                                             <th scope="col">Qtd. cuidadores</th>
                                             <th scope="col">Fundação</th>
                                             <th scope="col">Custos</th>
+                                            <th scope="col">URL origem</th>
                                             <th scope="col">Criado em</th>
                                             <th scope="col">Ações</th>
                                         </tr>
@@ -59,7 +60,7 @@
                                                      'description','street','number','complement','district','city','state','zip',
                                                      'facebook','facebook_not_available','instagram','instagram_not_available',
                                                      'website','website_not_available','portion_value','medicines_value',
-                                                    'veterinarian_value','collaborators_value','other_costs_value','other_costs_description','photo_urls','source_tag',
+                                                    'veterinarian_value','collaborators_value','other_costs_value','other_costs_description','photo_urls','source_tag','source_url',
                                                  ]), [
                                                      'foundation_date' => optional($ong->foundation_date)->format('Y-m-d'),
                                                      'created_at' => optional($ong->created_at)->toIso8601String(),
@@ -85,6 +86,7 @@
                                                 <td>{{ $ong->caregiver_count ?? '--' }}</td>
                                                 <td>{{ optional($ong->foundation_date)->format('d/m/Y') ?: '--' }}</td>
                                                 <td>R$ {{ number_format($totalCosts, 2, ',', '.') }}</td>
+                                                <td>{{ $ong->source_url ?: "--" }}</td>
                                                 <td>{{ optional($ong->created_at)->format('d/m/Y H:i') }}</td>
                                                 <td class="text-nowrap">
                                                     <button
@@ -357,6 +359,10 @@
                             <div data-view-field="created_at"></div>
                         </div>
                         <div class="col-12">
+                            <div class="small text-muted">URL origem</div>
+                            <a data-view-link="source_url" class="link-primary" target="_blank" rel="noopener"></a>
+                        </div>
+                        <div class="col-12">
                             <div class="small text-muted">Descrição</div>
                             <div data-view-field="description"></div>
                         </div>
@@ -498,6 +504,7 @@
                  animal_count: viewModalEl.querySelector('[data-view-field="animal_count"]'),
                  caregiver_count: viewModalEl.querySelector('[data-view-field="caregiver_count"]'),
                  created_at: viewModalEl.querySelector('[data-view-field="created_at"]'),
+                 source_url: viewModalEl.querySelector('[data-view-link="source_url"]'),
                  description: viewModalEl.querySelector('[data-view-field="description"]'),
                  zip: viewModalEl.querySelector('[data-view-field="zip"]'),
                  street: viewModalEl.querySelector('[data-view-field="street"]'),
@@ -934,6 +941,7 @@
                     setViewText(viewFields.animal_count, payload.animal_count ?? '--');
                     setViewText(viewFields.caregiver_count, payload.caregiver_count ?? '--');
                     setViewText(viewFields.created_at, formatDateBr(payload.created_at, true));
+                    setViewLink(viewFields.source_url, payload.source_url || "");
                     setViewText(viewFields.description, payload.description || '--');
 
                     setViewText(viewFields.zip, payload.zip || '--');
@@ -1122,3 +1130,7 @@
         });
     </script>
 @endpush
+
+
+
+

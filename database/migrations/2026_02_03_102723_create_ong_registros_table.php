@@ -56,6 +56,7 @@ return new class extends Migration
             $table->index(['cnpj']);
 
             $table->string('source_tag')->nullable();
+            $table->string('source_url', 2048)->nullable();
 
             $table->decimal('other_costs_value', 12, 2)->nullable();
             $table->longText('other_costs_description')->nullable();

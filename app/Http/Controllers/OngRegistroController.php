@@ -171,6 +171,7 @@ class OngRegistroController extends Controller
             'other_costs_description' => ['nullable','string'],
 
             'source_tag'  => ['required','string','max:255'],
+            'source_url'  => ['nullable','string','max:2048'],
         ];
     }
 

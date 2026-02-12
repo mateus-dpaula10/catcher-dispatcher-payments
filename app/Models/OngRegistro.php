@@ -17,7 +17,7 @@ class OngRegistro extends Model
         'other_costs_value','other_costs_description',
         'photo_urls',
         'monthly_costs',
-        'ip','user_agent','source_tag'
+        'ip','user_agent','source_tag','source_url'
     ];
 
     protected $casts = [
